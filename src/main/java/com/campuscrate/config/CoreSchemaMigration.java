@@ -142,5 +142,11 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_to_let_owner_status (owner_id, status), "
                 + "INDEX idx_to_let_area_status (area, status), "
                 + "CONSTRAINT fk_to_let_owner FOREIGN KEY (owner_id) REFERENCES `USER` (user_id))");
+
+        // A new installation needs at least one real reference value before a
+        // student can create an item or marketplace post. Administrators can
+        // add and manage further categories and locations through their APIs.
+        jdbcTemplate.execute("INSERT IGNORE INTO `CATEGORY` (name) VALUES ('General')");
+        jdbcTemplate.execute("INSERT IGNORE INTO `LOCATION` (name) VALUES ('Campus')");
     }
 }
