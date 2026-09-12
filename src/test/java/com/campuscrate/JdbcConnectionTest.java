@@ -29,8 +29,7 @@ class JdbcConnectionTest {
     @Test
     void containsTheBackendSchema() {
         Set<String> expected = Set.of("user", "admin", "item", "category", "location", "claim",
-                "status_history", "marketplace_post", "marketplace_sale", "shuttle_driver", "shuttle_trip",
-                "shuttle_wait_request");
+                "status_history", "marketplace_post", "marketplace_sale", "to_let_listing");
         Set<String> tables = jdbcTemplate.queryForList(
                 "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()", String.class)
                 .stream().map(String::toLowerCase).collect(Collectors.toSet());

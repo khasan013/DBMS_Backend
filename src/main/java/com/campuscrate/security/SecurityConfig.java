@@ -41,9 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/users/register", "/api/users/login", "/api/users/verify-email", "/api/users/resend-verification", "/api/admin/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/categories/**", "/api/locations/**",
-                                "/api/marketplace/posts/**", "/api/shuttle/trips/**", "/api/shuttle/drivers/**").permitAll()
+                                "/api/marketplace/posts/**", "/api/to-let/listings/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/claims/*/status").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/shuttle/drivers/users/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**", "/api/categories/**", "/api/locations/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();

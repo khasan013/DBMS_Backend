@@ -119,35 +119,28 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_marketplace_sale_post_id (post_id), "
                 + "INDEX idx_marketplace_sale_buyer_id (buyer_id))");
 
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS shuttle_driver ("
-                + "driver_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
-                + "user_id BIGINT NOT NULL, "
-                + "status VARCHAR(20) NOT NULL DEFAULT 'pending', "
-                + "phone VARCHAR(32) NULL, vehicle_name VARCHAR(80) NULL, vehicle_number VARCHAR(40) NULL, "
-                + "profile_info VARCHAR(240) NULL, approved_by BIGINT NULL, approved_at DATETIME NULL, "
-                + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-                + "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
-                + "UNIQUE KEY uk_shuttle_driver_user_id (user_id), "
-                + "INDEX idx_shuttle_driver_status (status))");
+        // The old transport feature is retired. Drop child tables first so databases
+        // created by previous versions are cleaned up safely.
+        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_wait_request");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_trip");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_driver");
 
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS shuttle_trip ("
-                + "trip_id BIGINT AUTO_INCREMENT PRIMARY KEY, driver_id BIGINT NOT NULL, route VARCHAR(50) NOT NULL, "
-                + "status VARCHAR(20) NOT NULL DEFAULT 'scheduled', scheduled_start_at DATETIME NOT NULL, "
-                + "started_at DATETIME NULL, ended_at DATETIME NULL, latitude DECIMAL(10,7) NULL, "
-                + "longitude DECIMAL(10,7) NULL, last_location_at DATETIME NULL, "
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS to_let_listing ("
+                + "listing_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+                + "owner_id BIGINT NOT NULL, "
+                + "title VARCHAR(255) NOT NULL, "
+                + "description TEXT NOT NULL, "
+                + "area VARCHAR(150) NOT NULL, "
+                + "monthly_rent DECIMAL(12,2) NOT NULL, "
+                + "bedrooms INT NOT NULL, "
+                + "bathrooms INT NOT NULL, "
+                + "contact_phone VARCHAR(32) NOT NULL, "
+                + "available_from DATE NULL, "
+                + "status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE', "
                 + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                 + "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
-                + "INDEX idx_shuttle_trip_driver_status (driver_id, status), "
-                + "INDEX idx_shuttle_trip_route_status (route, status))");
-
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS shuttle_wait_request ("
-                + "wait_request_id BIGINT AUTO_INCREMENT PRIMARY KEY, trip_id BIGINT NOT NULL, "
-                + "driver_id BIGINT NOT NULL, user_id BIGINT NOT NULL, latitude DECIMAL(10,7) NOT NULL, "
-                + "longitude DECIMAL(10,7) NOT NULL, status VARCHAR(30) NOT NULL DEFAULT 'waiting', "
-                + "decision_at DATETIME NULL, inside_at DATETIME NULL, "
-                + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-                + "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
-                + "INDEX idx_shuttle_wait_trip_user_status (trip_id, user_id, status), "
-                + "INDEX idx_shuttle_wait_driver_status (driver_id, status))");
+                + "INDEX idx_to_let_owner_status (owner_id, status), "
+                + "INDEX idx_to_let_area_status (area, status), "
+                + "CONSTRAINT fk_to_let_owner FOREIGN KEY (owner_id) REFERENCES `USER` (user_id))");
     }
 }

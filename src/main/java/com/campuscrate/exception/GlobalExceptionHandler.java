@@ -137,23 +137,23 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler(ShuttleNotFoundException.class)
-    public ResponseEntity<ApiError> handleShuttleNotFound(ShuttleNotFoundException exception) {
+    @ExceptionHandler(ToLetListingNotFoundException.class)
+    public ResponseEntity<ApiError> handleToLetListingNotFound(ToLetListingNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler(ShuttleInvalidRequestException.class)
-    public ResponseEntity<ApiError> handleShuttleInvalidRequest(ShuttleInvalidRequestException exception) {
+    @ExceptionHandler(ToLetInvalidRequestException.class)
+    public ResponseEntity<ApiError> handleToLetInvalidRequest(ToLetInvalidRequestException exception) {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler(ShuttleConflictException.class)
-    public ResponseEntity<ApiError> handleShuttleConflict(ShuttleConflictException exception) {
+    @ExceptionHandler(ToLetConflictException.class)
+    public ResponseEntity<ApiError> handleToLetConflict(ToLetConflictException exception) {
         return error(HttpStatus.CONFLICT, exception.getMessage());
     }
 
-    @ExceptionHandler(ShuttleForbiddenException.class)
-    public ResponseEntity<ApiError> handleShuttleForbidden(ShuttleForbiddenException exception) {
+    @ExceptionHandler(ToLetForbiddenException.class)
+    public ResponseEntity<ApiError> handleToLetForbidden(ToLetForbiddenException exception) {
         return error(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
