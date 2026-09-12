@@ -49,14 +49,19 @@ public class EmailVerificationService {
     }
 
     public void verify(String email, String code) {
-        var rows = jdbcTemplate.query("SELECT code_hash, expires_at, attempts FROM email_verification_otp WHERE email = ?", (rs, i) -> new Object[] { rs.getString(1), rs.getTimestamp(2).toLocalDateTime(), rs.getInt(3) }, email);
+        var rows = jdbcTemplate.query("SELECT code_hash, expires_at, attempts FROM email_verification_otp WHERE email = ?",
+                (rs, i) -> new Object[] { rs.getString(1), rs.getObject(2, LocalDateTime.class), rs.getInt(3) }, email);
         if (rows.isEmpty()) throw new InvalidRequestException("Request a new verification code.");
         Object[] otp = rows.getFirst();
-        if ((int) otp[2] >= 5 || LocalDateTime.now().isAfter((LocalDateTime) otp[1]) || !passwordEncoder.matches(code, (String) otp[0])) {
+        LocalDateTime expiresAt = (LocalDateTime) otp[1];
+        if (expiresAt == null || (int) otp[2] >= 5 || LocalDateTime.now().isAfter(expiresAt)
+                || !passwordEncoder.matches(code, (String) otp[0])) {
             jdbcTemplate.update("UPDATE email_verification_otp SET attempts = attempts + 1 WHERE email = ?", email);
             throw new InvalidRequestException("Invalid or expired verification code.");
         }
-        jdbcTemplate.update("UPDATE `user` SET email_verified = TRUE WHERE email = ?", email);
+        // Keep the table name's case consistent with the schema. This is required
+        // by case-sensitive MySQL hosts such as Render's Linux environment.
+        jdbcTemplate.update("UPDATE `USER` SET email_verified = TRUE WHERE email = ?", email);
         jdbcTemplate.update("DELETE FROM email_verification_otp WHERE email = ?", email);
     }
 }
