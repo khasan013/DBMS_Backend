@@ -90,7 +90,7 @@ public class AdminService {
     }
 
     private AdminResponse toResponse(Admin admin) {
-        return new AdminResponse(admin.getAdminId(), admin.getEmail(), admin.getPhone(),
+        return new AdminResponse(admin.getAdminId(), admin.getName(), admin.getEmail(), admin.getPhone(),
                 admin.getProfileImageUrl());
     }
 }

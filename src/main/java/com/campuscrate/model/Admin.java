@@ -3,6 +3,7 @@ package com.campuscrate.model;
 public class Admin {
 
     private Long adminId;
+    private String name;
     private String email;
     private String passwordHash;
     private String phone;
@@ -11,8 +12,9 @@ public class Admin {
     public Admin() {
     }
 
-    public Admin(Long adminId, String email, String passwordHash, String phone, String profileImageUrl) {
+    public Admin(Long adminId, String name, String email, String passwordHash, String phone, String profileImageUrl) {
         this.adminId = adminId;
+        this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
         this.phone = phone;
@@ -26,6 +28,9 @@ public class Admin {
     public void setAdminId(Long adminId) {
         this.adminId = adminId;
     }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getEmail() {
         return email;

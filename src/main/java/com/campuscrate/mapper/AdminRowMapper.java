@@ -13,6 +13,7 @@ public class AdminRowMapper implements RowMapper<Admin> {
     public Admin mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         return new Admin(
                 resultSet.getLong("admin_id"),
+                resultSet.getString("name"),
                 resultSet.getString("email"),
                 resultSet.getString("password_hash"),
                 resultSet.getString("phone"),
