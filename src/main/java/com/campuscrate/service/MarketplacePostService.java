@@ -3,6 +3,7 @@ package com.campuscrate.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,17 @@ public class MarketplacePostService {
 
     public MarketplacePostResponse findById(Long postId) {
         return toResponse(findPost(postId));
+    }
+
+    @Transactional
+    public MarketplacePostResponse updateStatusByAdmin(Long postId, String status) {
+        String normalized = status.trim().toUpperCase();
+        if (!Set.of(ACTIVE, "SOLD", "CANCELLED").contains(normalized)) {
+            throw new MarketplaceInvalidRequestException("Marketplace status must be ACTIVE, SOLD, or CANCELLED");
+        }
+        findPost(postId);
+        postRepository.updateStatus(postId, normalized);
+        return findById(postId);
     }
 
     @Transactional

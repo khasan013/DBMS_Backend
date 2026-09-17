@@ -73,4 +73,8 @@ public class ToLetListingRepository {
     public boolean close(Long listingId) {
         return jdbcTemplate.update("UPDATE to_let_listing SET status = 'CLOSED' WHERE listing_id = ?", listingId) > 0;
     }
+
+    public boolean updateStatus(Long listingId, String status) {
+        return jdbcTemplate.update("UPDATE to_let_listing SET status = ? WHERE listing_id = ?", status, listingId) > 0;
+    }
 }

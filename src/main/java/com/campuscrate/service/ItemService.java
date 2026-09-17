@@ -1,6 +1,7 @@
 package com.campuscrate.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +68,17 @@ public class ItemService {
     public void delete(Long itemId) {
         findItem(itemId);
         itemRepository.delete(itemId);
+    }
+
+    @Transactional
+    public ItemResponse updateStatusByAdmin(Long itemId, String status) {
+        String normalized = status.trim().toUpperCase();
+        if (!Set.of("LOST", "FOUND", "RETURNED", "RESOLVED").contains(normalized)) {
+            throw new com.campuscrate.exception.InvalidRequestException("Item status must be LOST, FOUND, RETURNED, or RESOLVED");
+        }
+        findItem(itemId);
+        itemRepository.updateStatus(itemId, normalized);
+        return findById(itemId);
     }
 
     private void validateReferences(ItemRequest request) {

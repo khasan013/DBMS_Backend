@@ -20,6 +20,10 @@ import com.campuscrate.dto.ClaimResponse;
 import com.campuscrate.dto.ClaimStatusUpdateRequest;
 import com.campuscrate.dto.AdminUserResponse;
 import com.campuscrate.dto.UserSuspensionRequest;
+import com.campuscrate.dto.PostStatusUpdateRequest;
+import com.campuscrate.dto.ItemResponse;
+import com.campuscrate.dto.MarketplacePostResponse;
+import com.campuscrate.dto.ToLetListingResponse;
 import com.campuscrate.service.AdminService;
 import com.campuscrate.security.CurrentUser;
 
@@ -73,4 +77,16 @@ public class AdminController {
             @Valid @RequestBody UserSuspensionRequest request) {
         return adminService.setUserSuspended(userId, request.suspended());
     }
+
+    @GetMapping("/api/admin/items")
+    public List<ItemResponse> findItems() { return adminService.findItems(); }
+
+    @PutMapping("/api/admin/items/{itemId}/status") public ItemResponse updateItemStatus(@PathVariable Long itemId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateItemStatus(itemId, request.status()); }
+
+    @GetMapping("/api/admin/marketplace/posts")
+    public List<MarketplacePostResponse> findMarketplacePosts() { return adminService.findMarketplacePosts(); }
+
+    @PutMapping("/api/admin/marketplace/posts/{postId}/status") public MarketplacePostResponse updateMarketplaceStatus(@PathVariable Long postId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateMarketplaceStatus(postId, request.status()); }
+    @GetMapping("/api/admin/to-let/listings") public List<ToLetListingResponse> findToLetListings() { return adminService.findToLetListings(); }
+    @PutMapping("/api/admin/to-let/listings/{listingId}/status") public ToLetListingResponse updateToLetStatus(@PathVariable Long listingId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateToLetStatus(listingId, request.status()); }
 }

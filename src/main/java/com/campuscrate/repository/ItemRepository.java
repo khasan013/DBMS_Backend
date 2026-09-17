@@ -103,4 +103,8 @@ public class ItemRepository {
         String sql = "DELETE FROM `ITEM` WHERE item_id = ?";
         return jdbcTemplate.update(sql, itemId) > 0;
     }
+
+    public boolean updateStatus(Long itemId, String status) {
+        return jdbcTemplate.update("UPDATE `ITEM` SET status = ? WHERE item_id = ?", status, itemId) > 0;
+    }
 }

@@ -2,6 +2,7 @@ package com.campuscrate.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,21 @@ public class ToLetListingService {
     }
 
     public ToLetListingResponse findById(Long listingId) { return toResponse(find(listingId)); }
+
+    @Transactional
+    public ToLetListingResponse updateStatusByAdmin(Long listingId, String status) {
+        String normalized = status.trim().toUpperCase();
+        if (!Set.of("AVAILABLE", "RENTED", "CLOSED").contains(normalized)) {
+            throw new ToLetInvalidRequestException("To-let status must be AVAILABLE, RENTED, or CLOSED");
+        }
+        find(listingId);
+        listingRepository.updateStatus(listingId, normalized);
+        return findById(listingId);
+    }
+
+    public List<ToLetListingResponse> findAllForAdmin() {
+        return listingRepository.findAll(null, null, null, false, null).stream().map(this::toResponse).toList();
+    }
 
     public List<ToLetListingResponse> findByOwner(Long ownerId) {
         requireOwner(ownerId);

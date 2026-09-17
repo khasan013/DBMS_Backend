@@ -20,6 +20,9 @@ import com.campuscrate.exception.InvalidRequestException;
 import com.campuscrate.model.Admin;
 import com.campuscrate.repository.AdminRepository;
 import com.campuscrate.repository.UserRepository;
+import com.campuscrate.service.ItemService;
+import com.campuscrate.service.MarketplacePostService;
+import com.campuscrate.service.ToLetListingService;
 import com.campuscrate.security.JwtService;
 
 @Service
@@ -30,14 +33,21 @@ public class AdminService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final ItemService itemService;
+    private final MarketplacePostService marketplacePostService;
+    private final ToLetListingService toLetListingService;
 
     public AdminService(AdminRepository adminRepository, ClaimService claimService,
-            PasswordEncoder passwordEncoder, JwtService jwtService, UserRepository userRepository) {
+            PasswordEncoder passwordEncoder, JwtService jwtService, UserRepository userRepository,
+            ItemService itemService, MarketplacePostService marketplacePostService, ToLetListingService toLetListingService) {
         this.adminRepository = adminRepository;
         this.claimService = claimService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.itemService = itemService;
+        this.marketplacePostService = marketplacePostService;
+        this.toLetListingService = toLetListingService;
     }
 
     public AuthResponse<AdminResponse> login(AdminLoginRequest request) {
@@ -100,6 +110,20 @@ public class AdminService {
         return new AdminUserResponse(user.userId(), user.studentId(), user.name(), user.email(),
                 user.emailVerified(), user.phone(), user.profileImgUrl(), suspended);
     }
+
+    public List<com.campuscrate.dto.ItemResponse> findItems() {
+        return itemService.findAll(null, null, null, null, null);
+    }
+
+    public com.campuscrate.dto.ItemResponse updateItemStatus(Long itemId, String status) { return itemService.updateStatusByAdmin(itemId, status); }
+
+    public List<com.campuscrate.dto.MarketplacePostResponse> findMarketplacePosts() {
+        return marketplacePostService.findAll(null, null, null, null, null, null);
+    }
+
+    public com.campuscrate.dto.MarketplacePostResponse updateMarketplaceStatus(Long postId, String status) { return marketplacePostService.updateStatusByAdmin(postId, status); }
+    public com.campuscrate.dto.ToLetListingResponse updateToLetStatus(Long listingId, String status) { return toLetListingService.updateStatusByAdmin(listingId, status); }
+    public List<com.campuscrate.dto.ToLetListingResponse> findToLetListings() { return toLetListingService.findAllForAdmin(); }
 
     private Admin findAdmin(Long adminId) {
         return adminRepository.findById(adminId)
