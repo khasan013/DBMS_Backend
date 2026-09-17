@@ -9,6 +9,7 @@ import com.campuscrate.dto.UserLoginRequest;
 import com.campuscrate.dto.UserRegistrationRequest;
 import com.campuscrate.dto.UserResponse;
 import com.campuscrate.dto.UserUpdateRequest;
+import com.campuscrate.dto.PublicContactResponse;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.exception.DuplicateStudentIdException;
 import com.campuscrate.exception.InvalidCredentialsException;
@@ -72,6 +73,11 @@ public class UserService {
 
     public UserResponse getProfile(Long userId) {
         return toResponse(findUser(userId));
+    }
+
+    public PublicContactResponse getPublicContact(Long userId) {
+        User user = findUser(userId);
+        return new PublicContactResponse(user.getUserId(), user.getName(), user.getPhone(), user.getProfileImgUrl());
     }
 
     @Transactional

@@ -16,6 +16,7 @@ import com.campuscrate.dto.UserLoginRequest;
 import com.campuscrate.dto.UserRegistrationRequest;
 import com.campuscrate.dto.UserResponse;
 import com.campuscrate.dto.UserUpdateRequest;
+import com.campuscrate.dto.PublicContactResponse;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.dto.EmailVerificationRequest;
 import com.campuscrate.dto.ResendOtpRequest;
@@ -52,6 +53,11 @@ public class UserController {
     public UserResponse getProfile(@PathVariable Long id) {
         currentUser.requireUser(id);
         return userService.getProfile(id);
+    }
+
+    @GetMapping("/{id}/contact")
+    public PublicContactResponse getPublicContact(@PathVariable Long id) {
+        return userService.getPublicContact(id);
     }
 
     @PutMapping("/{id}")
