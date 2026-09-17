@@ -83,7 +83,7 @@ public class ToLetListingService {
     private ToLetListing fromRequest(Long listingId, ToLetListingRequest request, String status) {
         return new ToLetListing(listingId, request.ownerId(), request.title().trim(), request.description().trim(), request.area().trim(),
                 request.monthlyRent(), request.bedrooms(), request.bathrooms(), request.contactPhone().trim(), request.availableFrom(),
-                status, null, null);
+                status, null, null, request.photoUrls() == null ? List.of() : request.photoUrls());
     }
     private ToLetListing find(Long listingId) { return listingRepository.findById(listingId).orElseThrow(() -> new ToLetListingNotFoundException(listingId)); }
     private void requireOwner(Long ownerId) {
@@ -95,6 +95,6 @@ public class ToLetListingService {
     private ToLetListingResponse toResponse(ToLetListing listing) {
         return new ToLetListingResponse(listing.listingId(), listing.ownerId(), listing.title(), listing.description(), listing.area(),
                 listing.monthlyRent(), listing.bedrooms(), listing.bathrooms(), listing.contactPhone(), listing.availableFrom(),
-                listing.status(), listing.createdAt(), listing.updatedAt());
+                listing.status(), listing.createdAt(), listing.updatedAt(), listing.photoUrls());
     }
 }

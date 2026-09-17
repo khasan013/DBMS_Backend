@@ -137,6 +137,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "bedrooms INT NOT NULL, "
                 + "bathrooms INT NOT NULL, "
                 + "contact_phone VARCHAR(32) NOT NULL, "
+                + "photo_urls TEXT NULL, "
                 + "available_from DATE NULL, "
                 + "status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE', "
                 + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
@@ -144,6 +145,9 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_to_let_owner_status (owner_id, status), "
                 + "INDEX idx_to_let_area_status (area, status), "
                 + "CONSTRAINT fk_to_let_owner FOREIGN KEY (owner_id) REFERENCES `USER` (user_id))");
+
+        Integer photoColumnCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'to_let_listing' AND column_name = 'photo_urls'", Integer.class);
+        if (photoColumnCount == null || photoColumnCount == 0) jdbcTemplate.execute("ALTER TABLE to_let_listing ADD COLUMN photo_urls TEXT NULL AFTER contact_phone");
 
         // A new installation needs at least one real reference value before a
         // student can create an item or marketplace post. Administrators can

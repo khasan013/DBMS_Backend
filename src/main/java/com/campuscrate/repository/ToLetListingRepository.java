@@ -17,7 +17,7 @@ import com.campuscrate.model.ToLetListing;
 @Repository
 public class ToLetListingRepository {
     private static final String COLUMNS = "listing_id, owner_id, title, description, area, monthly_rent, bedrooms, "
-            + "bathrooms, contact_phone, available_from, status, created_at, updated_at";
+            + "bathrooms, contact_phone, available_from, status, created_at, updated_at, photo_urls";
     private final JdbcTemplate jdbcTemplate;
     private final ToLetListingRowMapper rowMapper = new ToLetListingRowMapper();
 
@@ -25,7 +25,7 @@ public class ToLetListingRepository {
 
     public ToLetListing create(ToLetListing listing) {
         String sql = "INSERT INTO to_let_listing (owner_id, title, description, area, monthly_rent, bedrooms, bathrooms, "
-                + "contact_phone, available_from, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "contact_phone, available_from, status, photo_urls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keys = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -34,12 +34,13 @@ public class ToLetListingRepository {
             statement.setBigDecimal(5, listing.monthlyRent()); statement.setInt(6, listing.bedrooms());
             statement.setInt(7, listing.bathrooms()); statement.setString(8, listing.contactPhone());
             statement.setObject(9, listing.availableFrom()); statement.setString(10, listing.status());
+            statement.setString(11, String.join("\n", listing.photoUrls()));
             return statement;
         }, keys);
         Number key = keys.getKey();
         return new ToLetListing(key == null ? null : key.longValue(), listing.ownerId(), listing.title(), listing.description(),
                 listing.area(), listing.monthlyRent(), listing.bedrooms(), listing.bathrooms(), listing.contactPhone(),
-                listing.availableFrom(), listing.status(), null, null);
+                listing.availableFrom(), listing.status(), null, null, listing.photoUrls());
     }
 
     public Optional<ToLetListing> findById(Long listingId) {
@@ -65,9 +66,9 @@ public class ToLetListingRepository {
 
     public boolean update(ToLetListing listing) {
         return jdbcTemplate.update("UPDATE to_let_listing SET title = ?, description = ?, area = ?, monthly_rent = ?, bedrooms = ?, "
-                + "bathrooms = ?, contact_phone = ?, available_from = ? WHERE listing_id = ?", listing.title(), listing.description(),
+                + "bathrooms = ?, contact_phone = ?, available_from = ?, photo_urls = ? WHERE listing_id = ?", listing.title(), listing.description(),
                 listing.area(), listing.monthlyRent(), listing.bedrooms(), listing.bathrooms(), listing.contactPhone(),
-                listing.availableFrom(), listing.listingId()) > 0;
+                listing.availableFrom(), String.join("\n", listing.photoUrls()), listing.listingId()) > 0;
     }
 
     public boolean close(Long listingId) {
