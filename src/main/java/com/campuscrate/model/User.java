@@ -7,6 +7,7 @@ public class User {
     private String name;
     private String email;
     private boolean emailVerified;
+    private boolean suspended;
     private String passwordHash;
     private String phone;
     private String profileImgUrl;
@@ -14,13 +15,14 @@ public class User {
     public User() {
     }
 
-    public User(Long userId, String studentId, String name, String email, boolean emailVerified, String passwordHash,
+    public User(Long userId, String studentId, String name, String email, boolean emailVerified, boolean suspended, String passwordHash,
             String phone, String profileImgUrl) {
         this.userId = userId;
         this.studentId = studentId;
         this.name = name;
         this.email = email;
         this.emailVerified = emailVerified;
+        this.suspended = suspended;
         this.passwordHash = passwordHash;
         this.phone = phone;
         this.profileImgUrl = profileImgUrl;
@@ -53,6 +55,8 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public boolean isEmailVerified() { return emailVerified; }
     public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+    public boolean isSuspended() { return suspended; }
+    public void setSuspended(boolean suspended) { this.suspended = suspended; }
 
     public String getPasswordHash() {
         return passwordHash;

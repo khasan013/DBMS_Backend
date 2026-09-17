@@ -45,7 +45,7 @@ public class UserService {
                 null,
                 request.studentId(),
                 request.name(),
-                request.email(), false,
+                request.email(), false, false,
                 passwordEncoder.encode(request.password()),
                 request.phone(),
                 request.profileImgUrl());
@@ -64,6 +64,7 @@ public class UserService {
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
+        if (user.isSuspended()) throw new InvalidRequestException("This account has been suspended. Contact an administrator.");
         if (!user.isEmailVerified()) throw new InvalidRequestException("Verify your email before signing in.");
         return new AuthResponse<>(jwtService.createToken(user.getUserId(), "USER"), "Bearer",
                 jwtService.expirationSeconds(), toResponse(user));

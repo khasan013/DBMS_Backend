@@ -12,12 +12,14 @@ import com.campuscrate.dto.AdminResponse;
 import com.campuscrate.dto.AdminUpdateRequest;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.dto.ClaimResponse;
+import com.campuscrate.dto.AdminUserResponse;
 import com.campuscrate.exception.AdminNotFoundException;
 import com.campuscrate.exception.DuplicateAdminException;
 import com.campuscrate.exception.InvalidCredentialsException;
 import com.campuscrate.exception.InvalidRequestException;
 import com.campuscrate.model.Admin;
 import com.campuscrate.repository.AdminRepository;
+import com.campuscrate.repository.UserRepository;
 import com.campuscrate.security.JwtService;
 
 @Service
@@ -27,13 +29,15 @@ public class AdminService {
     private final ClaimService claimService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     public AdminService(AdminRepository adminRepository, ClaimService claimService,
-            PasswordEncoder passwordEncoder, JwtService jwtService) {
+            PasswordEncoder passwordEncoder, JwtService jwtService, UserRepository userRepository) {
         this.adminRepository = adminRepository;
         this.claimService = claimService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     public AuthResponse<AdminResponse> login(AdminLoginRequest request) {
@@ -84,6 +88,19 @@ public class AdminService {
         return claimService.updateStatus(claimId, request);
     }
 
+    public List<AdminUserResponse> findUsers() {
+        return userRepository.findAll().stream().map(this::toAdminUserResponse).toList();
+    }
+
+    @Transactional
+    public AdminUserResponse setUserSuspended(Long userId, boolean suspended) {
+        AdminUserResponse user = userRepository.findById(userId).map(this::toAdminUserResponse)
+                .orElseThrow(() -> new com.campuscrate.exception.UserNotFoundException(userId));
+        userRepository.setSuspended(userId, suspended);
+        return new AdminUserResponse(user.userId(), user.studentId(), user.name(), user.email(),
+                user.emailVerified(), user.phone(), user.profileImgUrl(), suspended);
+    }
+
     private Admin findAdmin(Long adminId) {
         return adminRepository.findById(adminId)
                 .orElseThrow(() -> new AdminNotFoundException(adminId));
@@ -92,5 +109,10 @@ public class AdminService {
     private AdminResponse toResponse(Admin admin) {
         return new AdminResponse(admin.getAdminId(), admin.getName(), admin.getEmail(), admin.getPhone(),
                 admin.getProfileImageUrl());
+    }
+
+    private AdminUserResponse toAdminUserResponse(com.campuscrate.model.User user) {
+        return new AdminUserResponse(user.getUserId(), user.getStudentId(), user.getName(), user.getEmail(),
+                user.isEmailVerified(), user.getPhone(), user.getProfileImgUrl(), user.isSuspended());
     }
 }

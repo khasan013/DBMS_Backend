@@ -29,6 +29,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "name VARCHAR(120) NOT NULL, "
                 + "email VARCHAR(255) NULL, "
                 + "email_verified BOOLEAN NOT NULL DEFAULT FALSE, "
+                + "suspended BOOLEAN NOT NULL DEFAULT FALSE, "
                 + "password_hash VARCHAR(255) NOT NULL, "
                 + "phone VARCHAR(32) NOT NULL, "
                 + "profile_img_url VARCHAR(500) NULL, "

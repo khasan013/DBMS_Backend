@@ -15,7 +15,7 @@ import com.campuscrate.model.User;
 @Repository
 public class UserRepository {
 
-    private static final String SELECT_COLUMNS = "user_id, student_id, name, email, email_verified, password_hash, phone, profile_img_url";
+    private static final String SELECT_COLUMNS = "user_id, student_id, name, email, email_verified, suspended, password_hash, phone, profile_img_url";
 
     private final JdbcTemplate jdbcTemplate;
     private final UserRowMapper userRowMapper = new UserRowMapper();
@@ -65,6 +65,14 @@ public class UserRepository {
     public boolean updateProfile(Long userId, String name, String phone, String profileImgUrl) {
         String sql = "UPDATE `USER` SET name = ?, phone = ?, profile_img_url = ? WHERE user_id = ?";
         return jdbcTemplate.update(sql, name, phone, profileImgUrl, userId) > 0;
+    }
+
+    public List<User> findAll() {
+        return jdbcTemplate.query("SELECT " + SELECT_COLUMNS + " FROM `USER` ORDER BY user_id DESC", userRowMapper);
+    }
+
+    public boolean setSuspended(Long userId, boolean suspended) {
+        return jdbcTemplate.update("UPDATE `USER` SET suspended = ? WHERE user_id = ?", suspended, userId) > 0;
     }
 
     private Optional<User> findOne(String sql, Object parameter) {

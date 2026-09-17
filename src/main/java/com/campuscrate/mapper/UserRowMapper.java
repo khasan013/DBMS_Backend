@@ -17,6 +17,7 @@ public class UserRowMapper implements RowMapper<User> {
                 resultSet.getString("name"),
                 resultSet.getString("email"),
                 resultSet.getBoolean("email_verified"),
+                resultSet.getBoolean("suspended"),
                 resultSet.getString("password_hash"),
                 resultSet.getString("phone"),
                 resultSet.getString("profile_img_url"));
