@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.URL;
 
 public record ToLetListingRequest(
         @NotNull Long ownerId,
@@ -22,5 +21,5 @@ public record ToLetListingRequest(
         @Min(0) @Max(20) int bathrooms,
         @NotBlank @Size(max = 32) String contactPhone,
         LocalDate availableFrom,
-        @Size(max = 3, message = "A to-let listing can include at most 3 photos") List<@URL String> photoUrls) {
+        @Size(max = 3, message = "A to-let listing can include at most 3 photos") List<String> photoUrls) {
 }
