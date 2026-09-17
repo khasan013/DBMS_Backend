@@ -35,7 +35,7 @@ public class ToLetListingService {
 
     public List<ToLetListingResponse> findAll(String search, String area, BigDecimal maxRent) {
         if (maxRent != null && maxRent.signum() < 0) throw new ToLetInvalidRequestException("Maximum rent cannot be negative");
-        return listingRepository.findAll(search, area, maxRent, true, null).stream().map(this::toResponse).toList();
+        return listingRepository.findAll(search, area, maxRent, false, null).stream().map(this::toResponse).toList();
     }
 
     public ToLetListingResponse findById(Long listingId) { return toResponse(find(listingId)); }
