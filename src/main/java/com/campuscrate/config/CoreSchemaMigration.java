@@ -83,13 +83,13 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_claim_claimant_id (claimant_id), "
                 + "INDEX idx_claim_admin_id (admin_id))");
 
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `STATUS_HISTORY` ("
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `CLAIM_STATUS_HISTORY` ("
                 + "history_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
-                + "item_id BIGINT NOT NULL, "
                 + "claim_id BIGINT NOT NULL, "
                 + "status VARCHAR(30) NOT NULL, "
-                + "INDEX idx_status_history_item_id (item_id), "
-                + "INDEX idx_status_history_claim_id (claim_id))");
+                + "changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                + "INDEX idx_claim_status_history_claim_id (claim_id))");
+        migrateLegacyStatusHistory();
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `MARKETPLACE_POST` ("
                 + "post_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
@@ -137,7 +137,6 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "bedrooms INT NOT NULL, "
                 + "bathrooms INT NOT NULL, "
                 + "contact_phone VARCHAR(32) NOT NULL, "
-                + "photo_urls TEXT NULL, "
                 + "available_from DATE NULL, "
                 + "status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE', "
                 + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
@@ -146,13 +145,65 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_to_let_area_status (area, status), "
                 + "CONSTRAINT fk_to_let_owner FOREIGN KEY (owner_id) REFERENCES `USER` (user_id))");
 
-        Integer photoColumnCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'to_let_listing' AND column_name = 'photo_urls'", Integer.class);
-        if (photoColumnCount == null || photoColumnCount == 0) jdbcTemplate.execute("ALTER TABLE to_let_listing ADD COLUMN photo_urls TEXT NULL AFTER contact_phone");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS to_let_listing_photo ("
+                + "photo_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+                + "listing_id BIGINT NOT NULL, "
+                + "photo_url VARCHAR(500) NOT NULL, "
+                + "display_order TINYINT UNSIGNED NOT NULL, "
+                + "UNIQUE KEY uk_to_let_photo_order (listing_id, display_order), "
+                + "CONSTRAINT fk_to_let_photo_listing FOREIGN KEY (listing_id) REFERENCES to_let_listing (listing_id) ON DELETE CASCADE)");
+        migrateLegacyToLetPhotos();
+
+        jdbcTemplate.execute("CREATE OR REPLACE VIEW recent_highlights AS "
+                + "SELECT CONCAT('lost-', i.item_id) AS highlight_id, 'lost' AS module, i.title, i.description, i.status, "
+                + "NULL AS price, i.image_url, i.created_at AS created_at, c.name AS category_or_area "
+                + "FROM `ITEM` i JOIN `CATEGORY` c ON c.category_id = i.category_id WHERE i.status IN ('LOST', 'FOUND') "
+                + "UNION ALL "
+                + "SELECT CONCAT('market-', p.post_id), 'market', p.title, p.description, p.status, COALESCE(p.fixed_price, p.starting_price), "
+                + "NULL, p.created_at, c.name FROM `MARKETPLACE_POST` p JOIN `CATEGORY` c ON c.category_id = p.category_id WHERE p.status = 'ACTIVE' "
+                + "UNION ALL "
+                + "SELECT CONCAT('to-let-', l.listing_id), 'to-let', l.title, l.description, l.status, l.monthly_rent, "
+                + "(SELECT ph.photo_url FROM to_let_listing_photo ph WHERE ph.listing_id = l.listing_id ORDER BY ph.display_order LIMIT 1), "
+                + "l.created_at, l.area FROM to_let_listing l WHERE l.status = 'AVAILABLE'");
+        createRecentMarketplaceIndex();
 
         // A new installation needs at least one real reference value before a
         // student can create an item or marketplace post. Administrators can
         // add and manage further categories and locations through their APIs.
         jdbcTemplate.execute("INSERT IGNORE INTO `CATEGORY` (name) VALUES ('General')");
         jdbcTemplate.execute("INSERT IGNORE INTO `LOCATION` (name) VALUES ('Campus')");
+    }
+
+    private void migrateLegacyToLetPhotos() {
+        Integer columnCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'to_let_listing' AND column_name = 'photo_urls'", Integer.class);
+        if (columnCount == null || columnCount == 0) return;
+        jdbcTemplate.query("SELECT listing_id, photo_urls FROM to_let_listing WHERE photo_urls IS NOT NULL AND photo_urls <> ''", resultSet -> {
+            while (resultSet.next()) {
+                long listingId = resultSet.getLong("listing_id");
+                String[] urls = resultSet.getString("photo_urls").split("\\n");
+                for (int index = 0; index < urls.length; index++) {
+                    if (!urls[index].isBlank()) jdbcTemplate.update("INSERT IGNORE INTO to_let_listing_photo (listing_id, photo_url, display_order) VALUES (?, ?, ?)", listingId, urls[index], index + 1);
+                }
+            }
+            return null;
+        });
+        jdbcTemplate.execute("ALTER TABLE to_let_listing DROP COLUMN photo_urls");
+    }
+
+    private void createRecentMarketplaceIndex() {
+        Integer indexCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.statistics "
+                + "WHERE table_schema = DATABASE() AND table_name = 'MARKETPLACE_POST' AND index_name = 'idx_marketplace_active_recent'", Integer.class);
+        if (indexCount == null || indexCount == 0) {
+            jdbcTemplate.execute("CREATE INDEX idx_marketplace_active_recent ON `MARKETPLACE_POST` (status, created_at DESC)");
+        }
+    }
+
+    private void migrateLegacyStatusHistory() {
+        Integer legacyTableCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.tables "
+                + "WHERE table_schema = DATABASE() AND table_name = 'STATUS_HISTORY'", Integer.class);
+        if (legacyTableCount == null || legacyTableCount == 0) return;
+        jdbcTemplate.execute("INSERT IGNORE INTO `CLAIM_STATUS_HISTORY` (history_id, claim_id, status) "
+                + "SELECT history_id, claim_id, status FROM `STATUS_HISTORY`");
+        jdbcTemplate.execute("DROP TABLE `STATUS_HISTORY`");
     }
 }

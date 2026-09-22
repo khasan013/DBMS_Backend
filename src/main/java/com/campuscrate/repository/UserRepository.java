@@ -67,6 +67,10 @@ public class UserRepository {
         return jdbcTemplate.update(sql, name, phone, profileImgUrl, userId) > 0;
     }
 
+    public boolean updatePassword(Long userId, String passwordHash) {
+        return jdbcTemplate.update("UPDATE `USER` SET password_hash = ? WHERE user_id = ?", passwordHash, userId) > 0;
+    }
+
     public List<User> findAll() {
         return jdbcTemplate.query("SELECT " + SELECT_COLUMNS + " FROM `USER` ORDER BY user_id DESC", userRowMapper);
     }

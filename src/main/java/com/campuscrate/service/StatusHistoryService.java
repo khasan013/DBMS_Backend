@@ -30,9 +30,10 @@ public class StatusHistoryService {
 
     @Transactional
     public StatusHistoryResponse create(StatusHistoryRequest request) {
-        validateReferences(request.itemId(), request.claimId());
+        Claim claim = claimRepository.findById(request.claimId())
+                .orElseThrow(() -> new StatusHistoryReferenceException("claim", request.claimId()));
         StatusHistory statusHistory = new StatusHistory(
-                null, request.itemId(), request.claimId(), request.status());
+                null, claim.getItemId(), request.claimId(), request.status());
         return toResponse(statusHistoryRepository.create(statusHistory));
     }
 
@@ -52,18 +53,6 @@ public class StatusHistoryService {
         return statusHistoryRepository.findByClaimId(claimId).stream()
                 .map(this::toResponse)
                 .toList();
-    }
-
-    private void validateReferences(Long itemId, Long claimId) {
-        if (itemRepository.findById(itemId).isEmpty()) {
-            throw new StatusHistoryReferenceException("item", itemId);
-        }
-
-        Claim claim = claimRepository.findById(claimId)
-                .orElseThrow(() -> new StatusHistoryReferenceException("claim", claimId));
-        if (!itemId.equals(claim.getItemId())) {
-            throw new StatusHistoryReferenceException("claim for item", itemId);
-        }
     }
 
     private StatusHistoryResponse toResponse(StatusHistory statusHistory) {

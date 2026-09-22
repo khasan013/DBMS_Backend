@@ -20,6 +20,7 @@ public class EmailSchemaMigration implements ApplicationRunner {
         if (!columnExists("email_verified")) jdbcTemplate.execute("ALTER TABLE `USER` ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE");
         if (!indexExists("uk_user_email")) jdbcTemplate.execute("CREATE UNIQUE INDEX uk_user_email ON `USER` (email)");
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS email_verification_otp (email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS password_reset_otp (email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
     }
 
     private boolean columnExists(String column) {

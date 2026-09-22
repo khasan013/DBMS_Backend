@@ -11,11 +11,14 @@ import com.campuscrate.dto.UserResponse;
 import com.campuscrate.dto.UserUpdateRequest;
 import com.campuscrate.dto.PublicContactResponse;
 import com.campuscrate.dto.AuthResponse;
+import com.campuscrate.dto.PasswordResetConfirmRequest;
+import com.campuscrate.dto.PasswordResetRequest;
 import com.campuscrate.exception.DuplicateStudentIdException;
 import com.campuscrate.exception.InvalidCredentialsException;
 import com.campuscrate.exception.InvalidRequestException;
 import com.campuscrate.exception.UserNotFoundException;
 import com.campuscrate.model.User;
+import com.campuscrate.repository.AdminRepository;
 import com.campuscrate.repository.UserRepository;
 import com.campuscrate.security.JwtService;
 
@@ -23,12 +26,14 @@ import com.campuscrate.security.JwtService;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, EmailVerificationService emailVerificationService) {
+    public UserService(UserRepository userRepository, AdminRepository adminRepository, PasswordEncoder passwordEncoder, JwtService jwtService, EmailVerificationService emailVerificationService) {
         this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailVerificationService = emailVerificationService;
@@ -71,6 +76,29 @@ public class UserService {
     }
     public void verifyEmail(String email, String code) { emailVerificationService.verify(email, code); }
     public void resendEmailOtp(String email) { if (userRepository.findByEmail(email).isEmpty()) throw new InvalidRequestException("No account exists for this email."); emailVerificationService.sendOtp(email); }
+
+    public void requestPasswordReset(PasswordResetRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent() || adminRepository.findByEmail(request.email()).isPresent()) {
+            emailVerificationService.sendPasswordResetOtp(request.email());
+        }
+    }
+
+    @Transactional
+    public void resetPassword(PasswordResetConfirmRequest request) {
+        emailVerificationService.verifyPasswordResetOtp(request.email(), request.code());
+        String passwordHash = passwordEncoder.encode(request.password());
+        var user = userRepository.findByEmail(request.email());
+        if (user.isPresent()) {
+            userRepository.updatePassword(user.get().getUserId(), passwordHash);
+            return;
+        }
+        var admin = adminRepository.findByEmail(request.email());
+        if (admin.isPresent()) {
+            adminRepository.updatePassword(admin.get().getAdminId(), passwordHash);
+            return;
+        }
+        throw new InvalidRequestException("Invalid reset request.");
+    }
 
     public UserResponse getProfile(Long userId) {
         return toResponse(findUser(userId));

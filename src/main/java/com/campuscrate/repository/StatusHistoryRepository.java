@@ -14,7 +14,7 @@ import com.campuscrate.model.StatusHistory;
 @Repository
 public class StatusHistoryRepository {
 
-    private static final String SELECT_COLUMNS = "history_id, item_id, claim_id, status";
+    private static final String SELECT_COLUMNS = "h.history_id, c.item_id, h.claim_id, h.status";
 
     private final JdbcTemplate jdbcTemplate;
     private final StatusHistoryRowMapper statusHistoryRowMapper = new StatusHistoryRowMapper();
@@ -24,13 +24,12 @@ public class StatusHistoryRepository {
     }
 
     public StatusHistory create(StatusHistory statusHistory) {
-        String sql = "INSERT INTO `STATUS_HISTORY` (item_id, claim_id, status) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO `CLAIM_STATUS_HISTORY` (claim_id, status) VALUES (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             var preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setLong(1, statusHistory.getItemId());
-            preparedStatement.setLong(2, statusHistory.getClaimId());
-            preparedStatement.setString(3, statusHistory.getStatus());
+            preparedStatement.setLong(1, statusHistory.getClaimId());
+            preparedStatement.setString(2, statusHistory.getStatus());
             return preparedStatement;
         }, keyHolder);
 
@@ -42,14 +41,14 @@ public class StatusHistoryRepository {
     }
 
     public List<StatusHistory> findByItemId(Long itemId) {
-        String sql = "SELECT " + SELECT_COLUMNS
-                + " FROM `STATUS_HISTORY` WHERE item_id = ? ORDER BY history_id";
+        String sql = "SELECT " + SELECT_COLUMNS + " FROM `CLAIM_STATUS_HISTORY` h "
+                + "JOIN `CLAIM` c ON c.claim_id = h.claim_id WHERE c.item_id = ? ORDER BY h.history_id";
         return jdbcTemplate.query(sql, statusHistoryRowMapper, itemId);
     }
 
     public List<StatusHistory> findByClaimId(Long claimId) {
-        String sql = "SELECT " + SELECT_COLUMNS
-                + " FROM `STATUS_HISTORY` WHERE claim_id = ? ORDER BY history_id";
+        String sql = "SELECT " + SELECT_COLUMNS + " FROM `CLAIM_STATUS_HISTORY` h "
+                + "JOIN `CLAIM` c ON c.claim_id = h.claim_id WHERE h.claim_id = ? ORDER BY h.history_id";
         return jdbcTemplate.query(sql, statusHistoryRowMapper, claimId);
     }
 }

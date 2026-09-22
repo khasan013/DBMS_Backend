@@ -36,6 +36,10 @@ public class AdminRepository {
         return jdbcTemplate.update(sql, email, phone, profileImageUrl, adminId) > 0;
     }
 
+    public boolean updatePassword(Long adminId, String passwordHash) {
+        return jdbcTemplate.update("UPDATE `ADMIN` SET password_hash = ? WHERE admin_id = ?", passwordHash, adminId) > 0;
+    }
+
     public void upsertDefault(String name, String email, String passwordHash, String phone) {
         String sql = "INSERT INTO `ADMIN` (name, email, password_hash, phone) VALUES (?, ?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash), phone = VALUES(phone)";

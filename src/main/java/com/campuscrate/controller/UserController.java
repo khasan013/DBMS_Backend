@@ -20,6 +20,8 @@ import com.campuscrate.dto.PublicContactResponse;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.dto.EmailVerificationRequest;
 import com.campuscrate.dto.ResendOtpRequest;
+import com.campuscrate.dto.PasswordResetRequest;
+import com.campuscrate.dto.PasswordResetConfirmRequest;
 import com.campuscrate.service.UserService;
 import com.campuscrate.security.CurrentUser;
 
@@ -48,6 +50,10 @@ public class UserController {
     public ResponseEntity<Void> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) { userService.verifyEmail(request.email(), request.code()); return ResponseEntity.noContent().build(); }
     @PostMapping("/resend-verification")
     public ResponseEntity<Void> resendVerification(@Valid @RequestBody ResendOtpRequest request) { userService.resendEmailOtp(request.email()); return ResponseEntity.noContent().build(); }
+    @PostMapping("/password-reset")
+    public ResponseEntity<Void> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) { userService.requestPasswordReset(request); return ResponseEntity.noContent().build(); }
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetConfirmRequest request) { userService.resetPassword(request); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/{id}")
     public UserResponse getProfile(@PathVariable Long id) {
