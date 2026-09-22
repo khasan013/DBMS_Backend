@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/users/register", "/api/users/login", "/api/users/verify-email", "/api/users/resend-verification", "/api/users/password-reset", "/api/users/password-reset/confirm", "/api/admin/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/categories/**", "/api/locations/**", "/api/users/*/contact",
+                        .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/categories/**", "/api/locations/**", "/api/users/*/contact", "/api/admin/contact",
                                 "/api/marketplace/posts/**", "/api/to-let/listings/**", "/api/highlights/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/claims/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**", "/api/categories/**", "/api/locations/**").hasRole("ADMIN")

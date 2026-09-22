@@ -36,6 +36,11 @@ public class AdminRepository {
         return jdbcTemplate.update(sql, email, phone, profileImageUrl, adminId) > 0;
     }
 
+    public Optional<Admin> findPrimaryAdmin() {
+        return jdbcTemplate.query("SELECT " + SELECT_COLUMNS + " FROM `ADMIN` ORDER BY admin_id LIMIT 1", adminRowMapper)
+                .stream().findFirst();
+    }
+
     public boolean updatePassword(Long adminId, String passwordHash) {
         return jdbcTemplate.update("UPDATE `ADMIN` SET password_hash = ? WHERE admin_id = ?", passwordHash, adminId) > 0;
     }

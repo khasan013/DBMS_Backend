@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.campuscrate.dto.AdminLoginRequest;
 import com.campuscrate.dto.AdminResponse;
+import com.campuscrate.dto.PublicAdminContactResponse;
 import com.campuscrate.dto.AdminUpdateRequest;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.dto.ClaimResponse;
@@ -67,6 +68,11 @@ public class AdminController {
             @PathVariable Long claimId,
             @Valid @RequestBody ClaimStatusUpdateRequest request) {
         return adminService.updateClaimStatus(claimId, request);
+    }
+
+    @GetMapping("/api/admin/contact")
+    public PublicAdminContactResponse getPublicContact() {
+        return adminService.getPublicContact();
     }
 
     @GetMapping("/api/admin/users")

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.campuscrate.dto.AdminLoginRequest;
 import com.campuscrate.dto.AdminResponse;
+import com.campuscrate.dto.PublicAdminContactResponse;
 import com.campuscrate.dto.AdminUpdateRequest;
 import com.campuscrate.dto.AuthResponse;
 import com.campuscrate.dto.ClaimResponse;
@@ -62,6 +63,12 @@ public class AdminService {
 
     public AdminResponse findById(Long adminId) {
         return toResponse(findAdmin(adminId));
+    }
+
+    public PublicAdminContactResponse getPublicContact() {
+        Admin admin = adminRepository.findPrimaryAdmin()
+                .orElseThrow(() -> new AdminNotFoundException(0L));
+        return new PublicAdminContactResponse(admin.getAdminId(), admin.getName(), admin.getPhone(), admin.getProfileImageUrl());
     }
 
     @Transactional
