@@ -79,6 +79,21 @@ public class UserRepository {
         return jdbcTemplate.update("UPDATE `USER` SET suspended = ? WHERE user_id = ?", suspended, userId) > 0;
     }
 
+    public boolean deleteWithRelatedData(User user) {
+        Long userId = user.getUserId();
+        jdbcTemplate.update("DELETE h FROM `CLAIM_STATUS_HISTORY` h JOIN `CLAIM` c ON c.claim_id = h.claim_id "
+                + "WHERE c.claimant_id = ? OR c.item_id IN (SELECT item_id FROM `ITEM` WHERE reported_by = ?)", userId, userId);
+        jdbcTemplate.update("DELETE FROM `CLAIM` WHERE claimant_id = ? OR item_id IN (SELECT item_id FROM `ITEM` WHERE reported_by = ?)", userId, userId);
+        jdbcTemplate.update("DELETE FROM `MARKETPLACE_SALE` WHERE buyer_id = ? OR post_id IN (SELECT post_id FROM `MARKETPLACE_POST` WHERE seller_id = ?)", userId, userId);
+        jdbcTemplate.update("DELETE FROM `MARKETPLACE_POST` WHERE seller_id = ?", userId);
+        jdbcTemplate.update("DELETE p FROM to_let_listing_photo p JOIN to_let_listing l ON l.listing_id = p.listing_id WHERE l.owner_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM to_let_listing WHERE owner_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM `ITEM` WHERE reported_by = ?", userId);
+        jdbcTemplate.update("DELETE FROM email_verification_otp WHERE email = ?", user.getEmail());
+        jdbcTemplate.update("DELETE FROM password_reset_otp WHERE email = ?", user.getEmail());
+        return jdbcTemplate.update("DELETE FROM `USER` WHERE user_id = ?", userId) > 0;
+    }
+
     private Optional<User> findOne(String sql, Object parameter) {
         List<User> users = jdbcTemplate.query(sql, userRowMapper, parameter);
         return users.stream().findFirst();

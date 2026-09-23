@@ -118,6 +118,13 @@ public class AdminService {
                 user.emailVerified(), user.phone(), user.profileImgUrl(), suspended);
     }
 
+    @Transactional
+    public void deleteUser(Long userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.campuscrate.exception.UserNotFoundException(userId));
+        userRepository.deleteWithRelatedData(user);
+    }
+
     public List<com.campuscrate.dto.ItemResponse> findItems() {
         return itemService.findAll(null, null, null, null, null);
     }
