@@ -81,6 +81,12 @@ public class ItemService {
         return findById(itemId);
     }
 
+    @Transactional
+    public void deleteByAdmin(Long itemId) {
+        findItem(itemId);
+        itemRepository.deleteWithClaims(itemId);
+    }
+
     private void validateReferences(ItemRequest request) {
         if (userRepository.findById(request.reportedBy()).isEmpty()) {
             throw new ItemReferenceNotFoundException("user", request.reportedBy());

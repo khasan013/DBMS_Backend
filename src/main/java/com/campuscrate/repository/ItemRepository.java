@@ -104,6 +104,12 @@ public class ItemRepository {
         return jdbcTemplate.update(sql, itemId) > 0;
     }
 
+    public boolean deleteWithClaims(Long itemId) {
+        jdbcTemplate.update("DELETE h FROM `CLAIM_STATUS_HISTORY` h JOIN `CLAIM` c ON c.claim_id = h.claim_id WHERE c.item_id = ?", itemId);
+        jdbcTemplate.update("DELETE FROM `CLAIM` WHERE item_id = ?", itemId);
+        return delete(itemId);
+    }
+
     public boolean updateStatus(Long itemId, String status) {
         return jdbcTemplate.update("UPDATE `ITEM` SET status = ? WHERE item_id = ?", status, itemId) > 0;
     }

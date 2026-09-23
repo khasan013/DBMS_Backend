@@ -105,6 +105,11 @@ public class MarketplacePostRepository {
                 postId) > 0;
     }
 
+    public boolean deleteWithSales(Long postId) {
+        jdbcTemplate.update("DELETE FROM `MARKETPLACE_SALE` WHERE post_id = ?", postId);
+        return jdbcTemplate.update("DELETE FROM `MARKETPLACE_POST` WHERE post_id = ?", postId) > 0;
+    }
+
     public boolean updateStatus(Long postId, String status) {
         return jdbcTemplate.update("UPDATE `MARKETPLACE_POST` SET status = ? WHERE post_id = ?",
                 status, postId) > 0;

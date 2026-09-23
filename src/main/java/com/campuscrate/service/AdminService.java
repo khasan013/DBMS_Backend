@@ -130,13 +130,16 @@ public class AdminService {
     }
 
     public com.campuscrate.dto.ItemResponse updateItemStatus(Long itemId, String status) { return itemService.updateStatusByAdmin(itemId, status); }
+    public void deleteItem(Long itemId) { itemService.deleteByAdmin(itemId); }
 
     public List<com.campuscrate.dto.MarketplacePostResponse> findMarketplacePosts() {
         return marketplacePostService.findAll(null, null, null, null, null, null);
     }
 
     public com.campuscrate.dto.MarketplacePostResponse updateMarketplaceStatus(Long postId, String status) { return marketplacePostService.updateStatusByAdmin(postId, status); }
+    public void deleteMarketplacePost(Long postId) { marketplacePostService.deleteByAdmin(postId); }
     public com.campuscrate.dto.ToLetListingResponse updateToLetStatus(Long listingId, String status) { return toLetListingService.updateStatusByAdmin(listingId, status); }
+    public void deleteToLetListing(Long listingId) { toLetListingService.deleteByAdmin(listingId); }
     public List<com.campuscrate.dto.ToLetListingResponse> findToLetListings() { return toLetListingService.findAllForAdmin(); }
 
     private Admin findAdmin(Long adminId) {

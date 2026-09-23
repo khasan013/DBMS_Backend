@@ -95,11 +95,14 @@ public class AdminController {
     public List<ItemResponse> findItems() { return adminService.findItems(); }
 
     @PutMapping("/api/admin/items/{itemId}/status") public ItemResponse updateItemStatus(@PathVariable Long itemId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateItemStatus(itemId, request.status()); }
+    @DeleteMapping("/api/admin/items/{itemId}") public ResponseEntity<Void> deleteItem(@PathVariable Long itemId) { adminService.deleteItem(itemId); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/api/admin/marketplace/posts")
     public List<MarketplacePostResponse> findMarketplacePosts() { return adminService.findMarketplacePosts(); }
 
     @PutMapping("/api/admin/marketplace/posts/{postId}/status") public MarketplacePostResponse updateMarketplaceStatus(@PathVariable Long postId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateMarketplaceStatus(postId, request.status()); }
+    @DeleteMapping("/api/admin/marketplace/posts/{postId}") public ResponseEntity<Void> deleteMarketplacePost(@PathVariable Long postId) { adminService.deleteMarketplacePost(postId); return ResponseEntity.noContent().build(); }
     @GetMapping("/api/admin/to-let/listings") public List<ToLetListingResponse> findToLetListings() { return adminService.findToLetListings(); }
     @PutMapping("/api/admin/to-let/listings/{listingId}/status") public ToLetListingResponse updateToLetStatus(@PathVariable Long listingId, @Valid @RequestBody PostStatusUpdateRequest request) { return adminService.updateToLetStatus(listingId, request.status()); }
+    @DeleteMapping("/api/admin/to-let/listings/{listingId}") public ResponseEntity<Void> deleteToLetListing(@PathVariable Long listingId) { adminService.deleteToLetListing(listingId); return ResponseEntity.noContent().build(); }
 }

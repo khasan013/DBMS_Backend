@@ -51,6 +51,12 @@ public class ToLetListingService {
         return findById(listingId);
     }
 
+    @Transactional
+    public void deleteByAdmin(Long listingId) {
+        find(listingId);
+        listingRepository.deleteWithPhotos(listingId);
+    }
+
     public List<ToLetListingResponse> findAllForAdmin() {
         return listingRepository.findAll(null, null, null, false, null).stream().map(this::toResponse).toList();
     }

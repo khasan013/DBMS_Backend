@@ -99,6 +99,12 @@ public class MarketplacePostService {
     }
 
     @Transactional
+    public void deleteByAdmin(Long postId) {
+        findPost(postId);
+        postRepository.deleteWithSales(postId);
+    }
+
+    @Transactional
     public MarketplacePostResponse update(Long postId, Long actingSellerId,
             MarketplacePostUpdateRequest request) {
         MarketplacePost existing = findPost(postId);
