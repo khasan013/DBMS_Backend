@@ -5,12 +5,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-
-/**
- * Creates the application's baseline schema when it is connected to a new
- * database. Every statement is idempotent, so existing databases and data are
- * left untouched.
- */
 @Component
 @Order(0)
 public class CoreSchemaMigration implements ApplicationRunner {
@@ -89,7 +83,6 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "status VARCHAR(30) NOT NULL, "
                 + "changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                 + "INDEX idx_claim_status_history_claim_id (claim_id))");
-        migrateLegacyStatusHistory();
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `MARKETPLACE_POST` ("
                 + "post_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
@@ -121,12 +114,6 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_marketplace_sale_post_id (post_id), "
                 + "INDEX idx_marketplace_sale_buyer_id (buyer_id))");
 
-        // The old transport feature is retired. Drop child tables first so databases
-        // created by previous versions are cleaned up safely.
-        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_wait_request");
-        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_trip");
-        jdbcTemplate.execute("DROP TABLE IF EXISTS shuttle_driver");
-
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS to_let_listing ("
                 + "listing_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
                 + "owner_id BIGINT NOT NULL, "
@@ -152,8 +139,12 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "display_order TINYINT UNSIGNED NOT NULL, "
                 + "UNIQUE KEY uk_to_let_photo_order (listing_id, display_order), "
                 + "CONSTRAINT fk_to_let_photo_listing FOREIGN KEY (listing_id) REFERENCES to_let_listing (listing_id) ON DELETE CASCADE)");
-        migrateLegacyToLetPhotos();
-
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS email_verification_otp ("
+                + "email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, "
+                + "attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS password_reset_otp ("
+                + "email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, "
+                + "attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
         jdbcTemplate.execute("CREATE OR REPLACE VIEW recent_highlights AS "
                 + "SELECT CONCAT('lost-', i.item_id) AS highlight_id, 'lost' AS module, i.title, i.description, i.status, "
                 + "NULL AS price, i.image_url, i.created_at AS created_at, c.name AS category_or_area "
@@ -166,28 +157,8 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "(SELECT ph.photo_url FROM to_let_listing_photo ph WHERE ph.listing_id = l.listing_id ORDER BY ph.display_order LIMIT 1), "
                 + "l.created_at, l.area FROM to_let_listing l WHERE l.status = 'AVAILABLE'");
         createRecentMarketplaceIndex();
-
-        // A new installation needs at least one real reference value before a
-        // student can create an item or marketplace post. Administrators can
-        // add and manage further categories and locations through their APIs.
         jdbcTemplate.execute("INSERT IGNORE INTO `CATEGORY` (name) VALUES ('General')");
         jdbcTemplate.execute("INSERT IGNORE INTO `LOCATION` (name) VALUES ('Campus')");
-    }
-
-    private void migrateLegacyToLetPhotos() {
-        Integer columnCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'to_let_listing' AND column_name = 'photo_urls'", Integer.class);
-        if (columnCount == null || columnCount == 0) return;
-        jdbcTemplate.query("SELECT listing_id, photo_urls FROM to_let_listing WHERE photo_urls IS NOT NULL AND photo_urls <> ''", resultSet -> {
-            while (resultSet.next()) {
-                long listingId = resultSet.getLong("listing_id");
-                String[] urls = resultSet.getString("photo_urls").split("\\n");
-                for (int index = 0; index < urls.length; index++) {
-                    if (!urls[index].isBlank()) jdbcTemplate.update("INSERT IGNORE INTO to_let_listing_photo (listing_id, photo_url, display_order) VALUES (?, ?, ?)", listingId, urls[index], index + 1);
-                }
-            }
-            return null;
-        });
-        jdbcTemplate.execute("ALTER TABLE to_let_listing DROP COLUMN photo_urls");
     }
 
     private void createRecentMarketplaceIndex() {
@@ -198,12 +169,4 @@ public class CoreSchemaMigration implements ApplicationRunner {
         }
     }
 
-    private void migrateLegacyStatusHistory() {
-        Integer legacyTableCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.tables "
-                + "WHERE table_schema = DATABASE() AND table_name = 'STATUS_HISTORY'", Integer.class);
-        if (legacyTableCount == null || legacyTableCount == 0) return;
-        jdbcTemplate.execute("INSERT IGNORE INTO `CLAIM_STATUS_HISTORY` (history_id, claim_id, status) "
-                + "SELECT history_id, claim_id, status FROM `STATUS_HISTORY`");
-        jdbcTemplate.execute("DROP TABLE `STATUS_HISTORY`");
-    }
 }
