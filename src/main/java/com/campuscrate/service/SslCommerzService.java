@@ -30,10 +30,17 @@ public class SslCommerzService {
         String host=live ? "https://securepay.sslcommerz.com" : "https://sandbox.sslcommerz.com";
         Map<String,String> form=new LinkedHashMap<>(); form.put("store_id",storeId); form.put("store_passwd",storePassword); form.put("total_amount",total.toPlainString()); form.put("currency","BDT"); form.put("tran_id",transactionId);
         form.put("success_url",callbackBase+"/api/food/payments/sslcommerz/success"); form.put("fail_url",callbackBase+"/api/food/payments/sslcommerz/fail"); form.put("cancel_url",callbackBase+"/api/food/payments/sslcommerz/cancel");
-        form.put("cus_name",customerName); form.put("cus_email",email); form.put("cus_add1","Campus"); form.put("cus_city","Dhaka"); form.put("cus_country","Bangladesh"); form.put("cus_phone",phone); form.put("product_name","Campus food order"); form.put("product_category","Food"); form.put("product_profile","general");
-        try { var request=HttpRequest.newBuilder(URI.create(host+"/gwprocess/v4/api.php")).timeout(Duration.ofSeconds(25)).header("Content-Type","application/x-www-form-urlencoded").POST(HttpRequest.BodyPublishers.ofString(encode(form))).build(); var response=http.send(request,HttpResponse.BodyHandlers.ofString()); var body=json.readTree(response.body()); String url=body.path("GatewayPageURL").asText(); if (response.statusCode()/100!=2 || url.isBlank()) throw new InvalidRequestException("SSLCommerz could not start the payment session."); return url; }
+        form.put("cus_name",customerName); form.put("cus_email",email); form.put("cus_add1","Campus"); form.put("cus_city","Dhaka"); form.put("cus_country","Bangladesh"); form.put("cus_phone",phone); form.put("shipping_method","NO"); form.put("num_of_item","1"); form.put("product_name","Campus food order"); form.put("product_category","Food"); form.put("product_profile","general");
+        try { var request=HttpRequest.newBuilder(URI.create(host+"/gwprocess/v4/api.php")).timeout(Duration.ofSeconds(25)).header("Content-Type","application/x-www-form-urlencoded").POST(HttpRequest.BodyPublishers.ofString(encode(form))).build(); var response=http.send(request,HttpResponse.BodyHandlers.ofString()); var body=json.readTree(response.body()); String url=body.path("GatewayPageURL").asText(); if (response.statusCode()/100!=2 || url.isBlank()) throw new InvalidRequestException(sessionError(body.path("failedreason").asText(), body.path("status").asText())); return url; }
         catch (InvalidRequestException exception) { throw exception; }
         catch (Exception exception) { throw new InvalidRequestException("Could not connect to SSLCommerz."); }
+    }
+    private String sessionError(String reason, String status) {
+        String detail = reason == null || reason.isBlank() ? status : reason;
+        if (detail == null || detail.isBlank()) return "SSLCommerz rejected the payment session. Check the live-store credentials and activation status.";
+        // Gateway messages can be shown to the buyer, but never include a response body or credentials.
+        String safeDetail = detail.replaceAll("[\\r\\n]", " ");
+        return "SSLCommerz rejected the payment session: " + safeDetail.substring(0, Math.min(safeDetail.length(), 180));
     }
     public boolean validate(String validationId) {
         if (validationId == null || validationId.isBlank()) return false;
