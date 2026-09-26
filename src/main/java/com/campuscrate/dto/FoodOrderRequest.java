@@ -5,5 +5,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-public record FoodOrderRequest(@NotNull Long vendorId, @NotBlank String paymentMethod,
+import jakarta.validation.constraints.Size;
+public record FoodOrderRequest(@NotNull Long vendorId, @NotBlank String paymentMethod, @NotBlank @Size(max = 500) String deliveryLocation,
         @NotEmpty List<@Valid FoodOrderLineRequest> items) { }

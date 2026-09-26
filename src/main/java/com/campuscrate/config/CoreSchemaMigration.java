@@ -157,7 +157,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "INDEX idx_food_item_vendor_available (vendor_id, available), CONSTRAINT fk_food_item_vendor FOREIGN KEY (vendor_id) REFERENCES food_vendor (vendor_id) ON DELETE CASCADE)");
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_order ("
                 + "food_order_id BIGINT AUTO_INCREMENT PRIMARY KEY, vendor_id BIGINT NOT NULL, buyer_id BIGINT NOT NULL, total_amount DECIMAL(12,2) NOT NULL, "
-                + "payment_method VARCHAR(20) NOT NULL, payment_status VARCHAR(30) NOT NULL, order_status VARCHAR(30) NOT NULL, transaction_id VARCHAR(64) NULL, "
+                + "payment_method VARCHAR(20) NOT NULL, payment_status VARCHAR(30) NOT NULL, order_status VARCHAR(30) NOT NULL, delivery_location VARCHAR(500) NOT NULL, transaction_id VARCHAR(64) NULL, "
                 + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
                 + "UNIQUE KEY uk_food_order_transaction (transaction_id), INDEX idx_food_order_buyer (buyer_id), INDEX idx_food_order_vendor (vendor_id), "
                 + "CONSTRAINT fk_food_order_vendor FOREIGN KEY (vendor_id) REFERENCES food_vendor (vendor_id), CONSTRAINT fk_food_order_buyer FOREIGN KEY (buyer_id) REFERENCES `USER` (user_id))");
@@ -165,6 +165,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "food_order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY, food_order_id BIGINT NOT NULL, food_item_id BIGINT NOT NULL, "
                 + "quantity INT NOT NULL, unit_price DECIMAL(12,2) NOT NULL, CONSTRAINT fk_food_order_item_order FOREIGN KEY (food_order_id) REFERENCES food_order (food_order_id) ON DELETE CASCADE, "
                 + "CONSTRAINT fk_food_order_item_food FOREIGN KEY (food_item_id) REFERENCES food_item (food_item_id))");
+        ensureColumn("food_order", "delivery_location", "VARCHAR(500) NULL");
         jdbcTemplate.execute("CREATE OR REPLACE VIEW recent_highlights AS "
                 + "SELECT CONCAT('lost-', i.item_id) AS highlight_id, 'lost' AS module, i.title, i.description, i.status, "
                 + "NULL AS price, i.image_url, i.created_at AS created_at, c.name AS category_or_area "
@@ -187,6 +188,11 @@ public class CoreSchemaMigration implements ApplicationRunner {
         if (indexCount == null || indexCount == 0) {
             jdbcTemplate.execute("CREATE INDEX idx_marketplace_active_recent ON `MARKETPLACE_POST` (status, created_at DESC)");
         }
+    }
+
+    private void ensureColumn(String table, String column, String definition) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?", Integer.class, table, column);
+        if (count == null || count == 0) jdbcTemplate.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
     }
 
 }
