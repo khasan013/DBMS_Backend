@@ -81,6 +81,11 @@ public class UserRepository {
 
     public boolean deleteWithRelatedData(User user) {
         Long userId = user.getUserId();
+        jdbcTemplate.update("DELETE oi FROM food_order_item oi JOIN food_order o ON o.food_order_id = oi.food_order_id "
+                + "WHERE o.buyer_id = ? OR o.vendor_id IN (SELECT vendor_id FROM food_vendor WHERE user_id = ?)", userId, userId);
+        jdbcTemplate.update("DELETE FROM food_order WHERE buyer_id = ? OR vendor_id IN (SELECT vendor_id FROM food_vendor WHERE user_id = ?)", userId, userId);
+        jdbcTemplate.update("DELETE FROM food_item WHERE vendor_id IN (SELECT vendor_id FROM food_vendor WHERE user_id = ?)", userId);
+        jdbcTemplate.update("DELETE FROM food_vendor WHERE user_id = ?", userId);
         jdbcTemplate.update("DELETE h FROM `CLAIM_STATUS_HISTORY` h JOIN `CLAIM` c ON c.claim_id = h.claim_id "
                 + "WHERE c.claimant_id = ? OR c.item_id IN (SELECT item_id FROM `ITEM` WHERE reported_by = ?)", userId, userId);
         jdbcTemplate.update("DELETE FROM `CLAIM` WHERE claimant_id = ? OR item_id IN (SELECT item_id FROM `ITEM` WHERE reported_by = ?)", userId, userId);

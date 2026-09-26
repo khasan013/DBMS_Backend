@@ -145,6 +145,26 @@ public class CoreSchemaMigration implements ApplicationRunner {
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS password_reset_otp ("
                 + "email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, "
                 + "attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_vendor ("
+                + "vendor_id BIGINT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT NOT NULL, name VARCHAR(150) NOT NULL, "
+                + "location VARCHAR(150) NOT NULL, description TEXT NULL, phone VARCHAR(32) NOT NULL, image_url VARCHAR(500) NULL, "
+                + "active BOOLEAN NOT NULL DEFAULT TRUE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                + "UNIQUE KEY uk_food_vendor_user (user_id), CONSTRAINT fk_food_vendor_user FOREIGN KEY (user_id) REFERENCES `USER` (user_id))");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_item ("
+                + "food_item_id BIGINT AUTO_INCREMENT PRIMARY KEY, vendor_id BIGINT NOT NULL, name VARCHAR(150) NOT NULL, "
+                + "description TEXT NULL, price DECIMAL(12,2) NOT NULL, image_url VARCHAR(500) NULL, available BOOLEAN NOT NULL DEFAULT TRUE, "
+                + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
+                + "INDEX idx_food_item_vendor_available (vendor_id, available), CONSTRAINT fk_food_item_vendor FOREIGN KEY (vendor_id) REFERENCES food_vendor (vendor_id) ON DELETE CASCADE)");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_order ("
+                + "food_order_id BIGINT AUTO_INCREMENT PRIMARY KEY, vendor_id BIGINT NOT NULL, buyer_id BIGINT NOT NULL, total_amount DECIMAL(12,2) NOT NULL, "
+                + "payment_method VARCHAR(20) NOT NULL, payment_status VARCHAR(30) NOT NULL, order_status VARCHAR(30) NOT NULL, transaction_id VARCHAR(64) NULL, "
+                + "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
+                + "UNIQUE KEY uk_food_order_transaction (transaction_id), INDEX idx_food_order_buyer (buyer_id), INDEX idx_food_order_vendor (vendor_id), "
+                + "CONSTRAINT fk_food_order_vendor FOREIGN KEY (vendor_id) REFERENCES food_vendor (vendor_id), CONSTRAINT fk_food_order_buyer FOREIGN KEY (buyer_id) REFERENCES `USER` (user_id))");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_order_item ("
+                + "food_order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY, food_order_id BIGINT NOT NULL, food_item_id BIGINT NOT NULL, "
+                + "quantity INT NOT NULL, unit_price DECIMAL(12,2) NOT NULL, CONSTRAINT fk_food_order_item_order FOREIGN KEY (food_order_id) REFERENCES food_order (food_order_id) ON DELETE CASCADE, "
+                + "CONSTRAINT fk_food_order_item_food FOREIGN KEY (food_item_id) REFERENCES food_item (food_item_id))");
         jdbcTemplate.execute("CREATE OR REPLACE VIEW recent_highlights AS "
                 + "SELECT CONCAT('lost-', i.item_id) AS highlight_id, 'lost' AS module, i.title, i.description, i.status, "
                 + "NULL AS price, i.image_url, i.created_at AS created_at, c.name AS category_or_area "

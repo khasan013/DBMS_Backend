@@ -1,0 +1,9 @@
+package com.campuscrate.dto;
+
+import java.util.List;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+public record FoodOrderRequest(@NotNull Long vendorId, @NotBlank String paymentMethod,
+        @NotEmpty List<@Valid FoodOrderLineRequest> items) { }

@@ -30,4 +30,19 @@ public class CurrentUser {
             throw new AccessDeniedException("Admin identity does not match the authenticated account");
         }
     }
+
+    public Long currentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || !authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+            throw new AccessDeniedException("A signed-in user is required");
+        }
+        try {
+            Long userId = Long.valueOf(authentication.getName());
+            if (userRepository.findById(userId).map(user -> user.isSuspended()).orElse(true)) {
+                throw new AccessDeniedException("This account has been suspended");
+            }
+            return userId;
+        } catch (NumberFormatException exception) { throw new AccessDeniedException("Invalid authenticated user"); }
+    }
 }

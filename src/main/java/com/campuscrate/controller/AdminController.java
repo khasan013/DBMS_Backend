@@ -26,7 +26,10 @@ import com.campuscrate.dto.PostStatusUpdateRequest;
 import com.campuscrate.dto.ItemResponse;
 import com.campuscrate.dto.MarketplacePostResponse;
 import com.campuscrate.dto.ToLetListingResponse;
+import com.campuscrate.dto.VendorCreateRequest;
+import com.campuscrate.dto.VendorResponse;
 import com.campuscrate.service.AdminService;
+import com.campuscrate.service.FoodService;
 import com.campuscrate.security.CurrentUser;
 
 @RestController
@@ -34,10 +37,12 @@ public class AdminController {
 
     private final AdminService adminService;
     private final CurrentUser currentUser;
+    private final FoodService foodService;
 
-    public AdminController(AdminService adminService, CurrentUser currentUser) {
+    public AdminController(AdminService adminService, CurrentUser currentUser, FoodService foodService) {
         this.adminService = adminService;
         this.currentUser = currentUser;
+        this.foodService = foodService;
     }
 
     @PostMapping("/api/admin/login")
@@ -90,6 +95,9 @@ public class AdminController {
         adminService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/api/admin/vendors") public List<VendorResponse> findVendors() { return foodService.adminVendors(); }
+    @PostMapping("/api/admin/vendors") public ResponseEntity<VendorResponse> createVendor(@Valid @RequestBody VendorCreateRequest request) { return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(foodService.createVendor(request)); }
 
     @GetMapping("/api/admin/items")
     public List<ItemResponse> findItems() { return adminService.findItems(); }
