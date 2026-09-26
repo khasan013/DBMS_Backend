@@ -50,14 +50,14 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<ItemResponse> create(@Valid @RequestBody ItemRequest request) {
-        currentUser.requireUser(request.reportedBy());
+        currentUser.requireNonVendor(request.reportedBy());
         return ResponseEntity.status(HttpStatus.CREATED).body(itemService.create(request));
     }
 
     @PutMapping("/{id}")
     public ItemResponse update(@PathVariable Long id, @Valid @RequestBody ItemRequest request) {
-        currentUser.requireUser(itemService.findById(id).reportedBy());
-        currentUser.requireUser(request.reportedBy());
+        currentUser.requireNonVendor(itemService.findById(id).reportedBy());
+        currentUser.requireNonVendor(request.reportedBy());
         return itemService.update(id, request);
     }
 

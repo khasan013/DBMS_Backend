@@ -31,7 +31,7 @@ public class ToLetListingController {
     }
     @PostMapping
     public ResponseEntity<ToLetListingResponse> create(@Valid @RequestBody ToLetListingRequest request) {
-        currentUser.requireUser(request.ownerId());
+        currentUser.requireNonVendor(request.ownerId());
         return ResponseEntity.status(HttpStatus.CREATED).body(listingService.create(request));
     }
     @GetMapping
@@ -43,7 +43,7 @@ public class ToLetListingController {
     @GetMapping("/owners/{ownerId}") public List<ToLetListingResponse> findByOwner(@PathVariable Long ownerId) { return listingService.findByOwner(ownerId); }
     @PutMapping("/{listingId}")
     public ToLetListingResponse update(@PathVariable Long listingId, @RequestParam Long ownerId, @Valid @RequestBody ToLetListingRequest request) {
-        currentUser.requireUser(ownerId); currentUser.requireUser(request.ownerId());
+        currentUser.requireNonVendor(ownerId); currentUser.requireNonVendor(request.ownerId());
         return listingService.update(listingId, ownerId, request);
     }
     @DeleteMapping("/{listingId}")

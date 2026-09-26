@@ -5,11 +5,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import com.campuscrate.repository.UserRepository;
+import com.campuscrate.repository.FoodRepository;
 
 @Component
 public class CurrentUser {
     private final UserRepository userRepository;
-    public CurrentUser(UserRepository userRepository) { this.userRepository = userRepository; }
+    private final FoodRepository foodRepository;
+    public CurrentUser(UserRepository userRepository, FoodRepository foodRepository) { this.userRepository = userRepository; this.foodRepository = foodRepository; }
     public void requireUser(Long userId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -44,5 +46,12 @@ public class CurrentUser {
             }
             return userId;
         } catch (NumberFormatException exception) { throw new AccessDeniedException("Invalid authenticated user"); }
+    }
+
+    public void requireNonVendor(Long userId) {
+        requireUser(userId);
+        if (foodRepository.findVendorByUser(userId).isPresent()) {
+            throw new AccessDeniedException("Vendor accounts can post food items only.");
+        }
     }
 }

@@ -36,7 +36,7 @@ public class MarketplacePostController {
     @PostMapping("/api/marketplace/posts")
     public ResponseEntity<MarketplacePostResponse> create(
             @Valid @RequestBody MarketplacePostCreateRequest request) {
-        currentUser.requireUser(request.sellerId());
+        currentUser.requireNonVendor(request.sellerId());
         return ResponseEntity.status(HttpStatus.CREATED).body(postService.create(request));
     }
 
@@ -66,7 +66,7 @@ public class MarketplacePostController {
             @PathVariable Long postId,
             @RequestParam Long sellerId,
             @Valid @RequestBody MarketplacePostUpdateRequest request) {
-        currentUser.requireUser(sellerId);
+        currentUser.requireNonVendor(sellerId);
         return postService.update(postId, sellerId, request);
     }
 
