@@ -15,6 +15,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // SSLCommerz posts the customer back from the gateway's own origin. These
+        // callback routes do not use browser credentials and validate the payment
+        // server-side, so they must not be limited to the frontend origin.
+        registry.addMapping("/api/food/payments/sslcommerz/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "OPTIONS")
+                .allowedHeaders("*");
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
