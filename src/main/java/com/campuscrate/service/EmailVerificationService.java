@@ -39,22 +39,41 @@ public class EmailVerificationService {
         sendOtp(email, "password_reset_otp", "Reset your Campus Crate password", "password reset");
     }
 
+    /** Sends the administrator-created vendor their one-time login details. */
+    public void sendVendorWelcome(String email, String vendorName, String loginId, String temporaryPassword,
+            String phone, String location) {
+        if (resendApiKey.isBlank() || fromEmail.isBlank()) throw new InvalidRequestException("Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.");
+        String html = "<h2>Welcome to Campus Crate Food</h2>"
+                + "<p>Hello " + escape(vendorName) + ", your vendor account is ready.</p>"
+                + "<p><strong>Login ID:</strong> " + escape(loginId) + "<br>"
+                + "<strong>Temporary password:</strong> " + escape(temporaryPassword) + "<br>"
+                + "<strong>Store location:</strong> " + escape(location) + "<br>"
+                + "<strong>Phone:</strong> " + escape(phone) + "</p>"
+                + "<p>Sign in to Campus Crate, then open <strong>Vendor dashboard</strong> to manage your store, menu, and orders. Please change your password after your first login.</p>";
+        sendEmail(email, "Your Campus Crate vendor account", html, "Could not send vendor invitation email.");
+    }
+
     private void sendOtp(String email, String table, String subject, String purpose) {
         if (resendApiKey.isBlank() || fromEmail.isBlank()) throw new InvalidRequestException("Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.");
         String code = "%06d".formatted(random.nextInt(1_000_000));
         jdbcTemplate.update("INSERT INTO " + table + " (email, code_hash, expires_at, attempts) VALUES (?, ?, ?, 0) "
                 + "ON DUPLICATE KEY UPDATE code_hash = VALUES(code_hash), expires_at = VALUES(expires_at), attempts = 0", email,
                 passwordEncoder.encode(code), LocalDateTime.now().plusMinutes(10));
+        sendEmail(email, subject, "<p>Your Campus Crate " + purpose + " code is <strong>" + code + "</strong>.</p><p>It expires in 10 minutes.</p>", "Could not send verification email.");
+    }
+
+    private void sendEmail(String email, String subject, String html, String failureMessage) {
         try {
-            String body = objectMapper.writeValueAsString(java.util.Map.of("from", fromEmail, "to", java.util.List.of(email),
-                    "subject", subject, "html", "<p>Your Campus Crate " + purpose + " code is <strong>" + code + "</strong>.</p><p>It expires in 10 minutes.</p>"));
+            String body = objectMapper.writeValueAsString(java.util.Map.of("from", fromEmail, "to", java.util.List.of(email), "subject", subject, "html", html));
             HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.resend.com/emails"))
                     .header("Authorization", "Bearer " + resendApiKey).header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 300) throw new InvalidRequestException("Could not send verification email.");
-        } catch (InvalidRequestException e) { throw e; } catch (Exception e) { throw new InvalidRequestException("Could not send verification email."); }
+            if (response.statusCode() >= 300) throw new InvalidRequestException(failureMessage);
+        } catch (InvalidRequestException e) { throw e; } catch (Exception e) { throw new InvalidRequestException(failureMessage); }
     }
+
+    private String escape(String value) { return value == null ? "" : value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"); }
 
     public void verify(String email, String code) {
         verifyOtp(email, code, "email_verification_otp");
