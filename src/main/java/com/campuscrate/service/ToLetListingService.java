@@ -86,8 +86,7 @@ public class ToLetListingService {
     public void close(Long listingId, Long ownerId) {
         ToLetListing existing = find(listingId);
         verifyOwner(existing, ownerId);
-        if (!"AVAILABLE".equals(existing.status())) throw new ToLetConflictException("Listing is already closed");
-        listingRepository.close(listingId);
+        listingRepository.deleteWithPhotos(listingId);
     }
 
     private ToLetListing fromRequest(Long listingId, ToLetListingRequest request, String status) {

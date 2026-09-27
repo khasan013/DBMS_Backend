@@ -86,6 +86,12 @@ public class MarketplacePostController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/api/marketplace/posts/{postId}/sold")
+    public MarketplacePostResponse markSold(@PathVariable Long postId, @RequestParam Long sellerId) {
+        currentUser.requireNonVendor(sellerId);
+        return postService.markSold(postId, sellerId);
+    }
+
     @GetMapping("/api/marketplace/users/{userId}/posts")
     public List<MarketplacePostResponse> findBySeller(@PathVariable Long userId) {
         return postService.findBySeller(userId);

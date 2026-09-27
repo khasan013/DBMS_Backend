@@ -173,10 +173,17 @@ public class MarketplacePostService {
     public void cancel(Long postId, Long actingSellerId) {
         MarketplacePost existing = findPost(postId);
         verifyOwner(existing, actingSellerId);
-        if (!ACTIVE.equals(existing.getStatus())) {
-            throw new MarketplaceConflictException("Only ACTIVE posts can be cancelled");
-        }
-        postRepository.cancel(postId);
+        if ("SOLD".equals(existing.getStatus())) throw new MarketplaceConflictException("Sold posts cannot be deleted.");
+        postRepository.deleteWithSales(postId);
+    }
+
+    @Transactional
+    public MarketplacePostResponse markSold(Long postId, Long actingSellerId) {
+        MarketplacePost existing = findPost(postId);
+        verifyOwner(existing, actingSellerId);
+        if (!ACTIVE.equals(existing.getStatus())) throw new MarketplaceConflictException("Only approved active posts can be marked sold.");
+        postRepository.updateStatus(postId, "SOLD");
+        return findById(postId);
     }
 
     private void validateReferences(Long sellerId, Long categoryId, Long locationId) {
