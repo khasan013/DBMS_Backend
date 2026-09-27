@@ -89,6 +89,15 @@ public class ToLetListingService {
         listingRepository.deleteWithPhotos(listingId);
     }
 
+    @Transactional
+    public ToLetListingResponse markRented(Long listingId, Long ownerId) {
+        ToLetListing existing = find(listingId);
+        verifyOwner(existing, ownerId);
+        if (!"AVAILABLE".equals(existing.status())) throw new ToLetConflictException("Only available listings can be marked rented.");
+        listingRepository.updateStatus(listingId, "RENTED");
+        return findById(listingId);
+    }
+
     private ToLetListing fromRequest(Long listingId, ToLetListingRequest request, String status) {
         return new ToLetListing(listingId, request.ownerId(), request.title().trim(), request.description().trim(), request.area().trim(),
                 request.monthlyRent(), request.bedrooms(), request.bathrooms(), request.contactPhone().trim(), request.availableFrom(),

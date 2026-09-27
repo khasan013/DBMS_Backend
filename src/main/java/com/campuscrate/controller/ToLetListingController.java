@@ -50,4 +50,8 @@ public class ToLetListingController {
     public ResponseEntity<Void> close(@PathVariable Long listingId, @RequestParam Long ownerId) {
         currentUser.requireUser(ownerId); listingService.close(listingId, ownerId); return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{listingId}/rented")
+    public ToLetListingResponse markRented(@PathVariable Long listingId, @RequestParam Long ownerId) {
+        currentUser.requireNonVendor(ownerId); return listingService.markRented(listingId, ownerId);
+    }
 }
