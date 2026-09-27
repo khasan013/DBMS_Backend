@@ -61,6 +61,11 @@ public class MarketplacePostRepository {
         return findOne("SELECT " + SELECT_COLUMNS + " FROM `MARKETPLACE_POST` WHERE post_id = ?", postId);
     }
 
+    /** Locks the post until the enclosing Spring JDBC transaction commits or rolls back. */
+    public Optional<MarketplacePost> findByIdForUpdate(Long postId) {
+        return findOne("SELECT " + SELECT_COLUMNS + " FROM `MARKETPLACE_POST` WHERE post_id = ? FOR UPDATE", postId);
+    }
+
     public List<MarketplacePost> findAll(String search, Long categoryId, Long locationId,
             String sellingType, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice,
             boolean activeOnly, Long sellerId) {

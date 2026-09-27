@@ -32,6 +32,11 @@ public class CurrentUser {
             throw new AccessDeniedException("Admin identity does not match the authenticated account");
         }
     }
+    public Long currentAdminId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || !authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) throw new AccessDeniedException("An administrator is required");
+        try { return Long.valueOf(authentication.getName()); } catch (NumberFormatException e) { throw new AccessDeniedException("Invalid administrator"); }
+    }
 
     public Long currentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

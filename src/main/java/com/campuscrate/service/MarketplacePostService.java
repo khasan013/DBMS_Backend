@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.campuscrate.dto.MarketplacePostCreateRequest;
 import com.campuscrate.dto.MarketplacePostResponse;
 import com.campuscrate.dto.MarketplacePostUpdateRequest;
+import com.campuscrate.dto.MarketplaceSaleResponse;
 import com.campuscrate.exception.MarketplaceConflictException;
 import com.campuscrate.exception.MarketplaceForbiddenException;
 import com.campuscrate.exception.MarketplaceInvalidRequestException;
@@ -21,7 +22,9 @@ import com.campuscrate.model.MarketplacePost;
 import com.campuscrate.repository.CategoryRepository;
 import com.campuscrate.repository.LocationRepository;
 import com.campuscrate.repository.MarketplacePostRepository;
+import com.campuscrate.repository.MarketplaceSaleRepository;
 import com.campuscrate.repository.UserRepository;
+import com.campuscrate.repository.NotificationRepository;
 
 @Service
 public class MarketplacePostService {
@@ -34,14 +37,18 @@ public class MarketplacePostService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
+    private final MarketplaceSaleRepository saleRepository;
+    private final NotificationRepository notifications;
 
     public MarketplacePostService(MarketplacePostRepository postRepository,
             UserRepository userRepository, CategoryRepository categoryRepository,
-            LocationRepository locationRepository) {
+            LocationRepository locationRepository, MarketplaceSaleRepository saleRepository, NotificationRepository notifications) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.locationRepository = locationRepository;
+        this.saleRepository = saleRepository;
+        this.notifications = notifications;
     }
 
     @Transactional
@@ -53,9 +60,10 @@ public class MarketplacePostService {
         MarketplacePost post = new MarketplacePost(null, request.sellerId(), request.categoryId(),
                 request.locationId(), request.title(), request.description(), request.condition(),
                 request.sellingType(), request.fixedPrice(), request.startingPrice(),
-                request.auctionStart(), request.auctionEnd(), ACTIVE, null, null);
+                request.auctionStart(), request.auctionEnd(), "PENDING_APPROVAL", null, null);
         try {
             MarketplacePost created = postRepository.create(post);
+            notifications.admin("Marketplace approval needed", "New marketplace post: " + created.getTitle());
             return toResponse(findPost(created.getPostId()));
         } catch (DataIntegrityViolationException exception) {
             throw new MarketplaceConflictException("Marketplace post violates a database constraint");
@@ -67,7 +75,7 @@ public class MarketplacePostService {
         validatePriceRange(minPrice, maxPrice);
         validateSellingTypeIfPresent(sellingType);
         return postRepository.findAll(search, categoryId, locationId, sellingType, minPrice, maxPrice,
-                false, null).stream().map(this::toResponse).toList();
+                true, null).stream().map(this::toResponse).toList();
     }
 
     public List<MarketplacePostResponse> findActive() {
@@ -87,14 +95,37 @@ public class MarketplacePostService {
         return toResponse(findPost(postId));
     }
 
+    /**
+     * One database transaction: locks the post, inserts exactly one sale, then marks it SOLD.
+     * A failure in either write marks the Spring transaction rollback-only; the unique post_id
+     * constraint is a second safeguard against duplicate sales.
+     */
+    @Transactional
+    public MarketplaceSaleResponse purchase(Long postId, Long buyerId) {
+        if (userRepository.findById(buyerId).isEmpty()) throw new MarketplaceReferenceNotFoundException("buyer", buyerId);
+        MarketplacePost post = postRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> new MarketplacePostNotFoundException(postId));
+        if (!ACTIVE.equals(post.getStatus())) throw new MarketplaceConflictException("This marketplace post is no longer available.");
+        if (!FIXED_PRICE.equals(post.getSellingType()) || post.getFixedPrice() == null) throw new MarketplaceConflictException("Only fixed-price posts can be purchased directly.");
+        if (post.getSellerId().equals(buyerId)) throw new MarketplaceConflictException("You cannot purchase your own post.");
+        try {
+            var sale = saleRepository.create(postId, buyerId, post.getFixedPrice());
+            if (!postRepository.updateStatus(postId, "SOLD")) throw new MarketplaceConflictException("Could not mark the post as sold.");
+            return new MarketplaceSaleResponse(sale.saleId(), sale.postId(), sale.buyerId(), sale.salePrice(), sale.status(), sale.soldAt());
+        } catch (DataIntegrityViolationException exception) {
+            throw new MarketplaceConflictException("This marketplace post has already been sold.");
+        }
+    }
+
     @Transactional
     public MarketplacePostResponse updateStatusByAdmin(Long postId, String status) {
         String normalized = status.trim().toUpperCase();
-        if (!Set.of(ACTIVE, "SOLD", "CANCELLED").contains(normalized)) {
-            throw new MarketplaceInvalidRequestException("Marketplace status must be ACTIVE, SOLD, or CANCELLED");
+        if (!Set.of(ACTIVE, "SOLD", "CANCELLED", "PENDING_APPROVAL").contains(normalized)) {
+            throw new MarketplaceInvalidRequestException("Invalid marketplace status");
         }
-        findPost(postId);
+        MarketplacePost post = findPost(postId);
         postRepository.updateStatus(postId, normalized);
+        notifications.user(post.getSellerId(), "Marketplace post " + normalized, "Your post '" + post.getTitle() + "' is now " + normalized + ".");
         return findById(postId);
     }
 

@@ -82,7 +82,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "claim_id BIGINT NOT NULL, "
                 + "status VARCHAR(30) NOT NULL, "
                 + "changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-                + "INDEX idx_claim_status_history_claim_id (claim_id))");
+                + "INDEX idx_claim_history_changed (claim_id, changed_at DESC))");
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `MARKETPLACE_POST` ("
                 + "post_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
@@ -111,8 +111,8 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "sale_price DECIMAL(12,2) NOT NULL, "
                 + "status VARCHAR(30) NOT NULL DEFAULT 'COMPLETED', "
                 + "sold_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-                + "INDEX idx_marketplace_sale_post_id (post_id), "
-                + "INDEX idx_marketplace_sale_buyer_id (buyer_id))");
+                + "UNIQUE KEY uk_marketplace_sale_post (post_id), "
+                + "INDEX idx_marketplace_sale_buyer_sold (buyer_id, sold_at DESC))");
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS to_let_listing ("
                 + "listing_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
@@ -145,6 +145,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS password_reset_otp ("
                 + "email VARCHAR(255) PRIMARY KEY, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL, "
                 + "attempts INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS notification (notification_id BIGINT AUTO_INCREMENT PRIMARY KEY, recipient_type VARCHAR(12) NOT NULL, recipient_id BIGINT NULL, title VARCHAR(160) NOT NULL, message VARCHAR(1000) NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX idx_notification_user_recent (recipient_type, recipient_id, notification_id DESC))");
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS food_vendor ("
                 + "vendor_id BIGINT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT NOT NULL, name VARCHAR(150) NOT NULL, "
                 + "location VARCHAR(150) NOT NULL, description TEXT NULL, phone VARCHAR(32) NOT NULL, image_url VARCHAR(500) NULL, "
@@ -177,17 +178,34 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "SELECT CONCAT('to-let-', l.listing_id), 'to-let', l.title, l.description, l.status, l.monthly_rent, "
                 + "(SELECT ph.photo_url FROM to_let_listing_photo ph WHERE ph.listing_id = l.listing_id ORDER BY ph.display_order LIMIT 1), "
                 + "l.created_at, l.area FROM to_let_listing l WHERE l.status = 'AVAILABLE'");
-        createRecentMarketplaceIndex();
+        createPerformanceIndexes();
         jdbcTemplate.execute("INSERT IGNORE INTO `CATEGORY` (name) VALUES ('General')");
         jdbcTemplate.execute("INSERT IGNORE INTO `LOCATION` (name) VALUES ('Campus')");
     }
 
-    private void createRecentMarketplaceIndex() {
-        Integer indexCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.statistics "
-                + "WHERE table_schema = DATABASE() AND table_name = 'MARKETPLACE_POST' AND index_name = 'idx_marketplace_active_recent'", Integer.class);
-        if (indexCount == null || indexCount == 0) {
-            jdbcTemplate.execute("CREATE INDEX idx_marketplace_active_recent ON `MARKETPLACE_POST` (status, created_at DESC)");
-        }
+    private void createPerformanceIndexes() {
+        // No indexes duplicate a primary key, unique key, or an existing single-column relationship index.
+        ensureIndex("MARKETPLACE_POST", "idx_marketplace_active_recent", "status, created_at DESC", false);
+        ensureIndex("MARKETPLACE_POST", "idx_marketplace_status_category", "status, category_id", false);
+        ensureIndex("ITEM", "idx_item_status_created", "status, created_at DESC", false);
+        ensureIndex("CLAIM", "idx_claim_status_updated", "status, updated_at DESC", false);
+        ensureIndex("CLAIM_STATUS_HISTORY", "idx_claim_history_changed", "claim_id, changed_at DESC", false);
+        dropIndexIfExists("CLAIM_STATUS_HISTORY", "idx_claim_status_history_claim_id");
+        ensureIndex("MARKETPLACE_SALE", "uk_marketplace_sale_post", "post_id", true);
+        dropIndexIfExists("MARKETPLACE_SALE", "idx_marketplace_sale_post_id");
+        ensureIndex("MARKETPLACE_SALE", "idx_marketplace_sale_buyer_sold", "buyer_id, sold_at DESC", false);
+        dropIndexIfExists("MARKETPLACE_SALE", "idx_marketplace_sale_buyer_id");
+        ensureIndex("to_let_listing", "idx_to_let_status_rent", "status, monthly_rent", false);
+    }
+
+    private void ensureIndex(String table, String index, String columns, boolean unique) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?", Integer.class, table, index);
+        if (count == null || count == 0) jdbcTemplate.execute("CREATE " + (unique ? "UNIQUE " : "") + "INDEX " + index + " ON `" + table + "` (" + columns + ")");
+    }
+
+    private void dropIndexIfExists(String table, String index) {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?", Integer.class, table, index);
+        if (count != null && count > 0) jdbcTemplate.execute("DROP INDEX " + index + " ON `" + table + "`");
     }
 
     private void ensureColumn(String table, String column, String definition) {

@@ -16,26 +16,29 @@ import com.campuscrate.exception.ToLetListingNotFoundException;
 import com.campuscrate.model.ToLetListing;
 import com.campuscrate.repository.ToLetListingRepository;
 import com.campuscrate.repository.UserRepository;
+import com.campuscrate.repository.NotificationRepository;
 
 @Service
 public class ToLetListingService {
     private final ToLetListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notifications;
 
-    public ToLetListingService(ToLetListingRepository listingRepository, UserRepository userRepository) {
-        this.listingRepository = listingRepository; this.userRepository = userRepository;
+    public ToLetListingService(ToLetListingRepository listingRepository, UserRepository userRepository, NotificationRepository notifications) {
+        this.listingRepository = listingRepository; this.userRepository = userRepository; this.notifications = notifications;
     }
 
     @Transactional
     public ToLetListingResponse create(ToLetListingRequest request) {
         requireOwner(request.ownerId());
-        ToLetListing created = listingRepository.create(fromRequest(null, request, "AVAILABLE"));
+        ToLetListing created = listingRepository.create(fromRequest(null, request, "PENDING_APPROVAL"));
+        notifications.admin("To-let approval needed", "New to-let listing: " + created.title());
         return toResponse(find(created.listingId()));
     }
 
     public List<ToLetListingResponse> findAll(String search, String area, BigDecimal maxRent) {
         if (maxRent != null && maxRent.signum() < 0) throw new ToLetInvalidRequestException("Maximum rent cannot be negative");
-        return listingRepository.findAll(search, area, maxRent, false, null).stream().map(this::toResponse).toList();
+        return listingRepository.findAll(search, area, maxRent, true, null).stream().map(this::toResponse).toList();
     }
 
     public ToLetListingResponse findById(Long listingId) { return toResponse(find(listingId)); }
@@ -43,11 +46,12 @@ public class ToLetListingService {
     @Transactional
     public ToLetListingResponse updateStatusByAdmin(Long listingId, String status) {
         String normalized = status.trim().toUpperCase();
-        if (!Set.of("AVAILABLE", "RENTED", "CLOSED").contains(normalized)) {
-            throw new ToLetInvalidRequestException("To-let status must be AVAILABLE, RENTED, or CLOSED");
+        if (!Set.of("PENDING_APPROVAL", "AVAILABLE", "RENTED", "CLOSED").contains(normalized)) {
+            throw new ToLetInvalidRequestException("Invalid to-let status");
         }
-        find(listingId);
+        ToLetListing listing = find(listingId);
         listingRepository.updateStatus(listingId, normalized);
+        notifications.user(listing.ownerId(), "To-let listing " + normalized, "Your listing '" + listing.title() + "' is now " + normalized + ".");
         return findById(listingId);
     }
 

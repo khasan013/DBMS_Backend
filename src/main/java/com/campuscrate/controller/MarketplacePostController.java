@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.campuscrate.dto.MarketplacePostCreateRequest;
 import com.campuscrate.dto.MarketplacePostResponse;
 import com.campuscrate.dto.MarketplacePostUpdateRequest;
+import com.campuscrate.dto.MarketplacePurchaseRequest;
+import com.campuscrate.dto.MarketplaceSaleResponse;
 import com.campuscrate.service.MarketplacePostService;
 import com.campuscrate.security.CurrentUser;
 
@@ -59,6 +61,13 @@ public class MarketplacePostController {
     @GetMapping("/api/marketplace/posts/{postId}")
     public MarketplacePostResponse findById(@PathVariable Long postId) {
         return postService.findById(postId);
+    }
+
+    @PostMapping("/api/marketplace/posts/{postId}/purchase")
+    public ResponseEntity<MarketplaceSaleResponse> purchase(@PathVariable Long postId,
+            @Valid @RequestBody MarketplacePurchaseRequest request) {
+        currentUser.requireUser(request.buyerId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(postService.purchase(postId, request.buyerId()));
     }
 
     @PutMapping("/api/marketplace/posts/{postId}")
