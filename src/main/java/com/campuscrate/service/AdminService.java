@@ -133,7 +133,7 @@ public class AdminService {
     public void deleteItem(Long itemId) { itemService.deleteByAdmin(itemId); }
 
     public List<com.campuscrate.dto.MarketplacePostResponse> findMarketplacePosts() {
-        return marketplacePostService.findAll(null, null, null, null, null, null);
+        return marketplacePostService.findAllForAdmin();
     }
 
     public com.campuscrate.dto.MarketplacePostResponse updateMarketplaceStatus(Long postId, String status) { return marketplacePostService.updateStatusByAdmin(postId, status); }

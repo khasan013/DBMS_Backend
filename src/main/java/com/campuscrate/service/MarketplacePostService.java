@@ -83,6 +83,12 @@ public class MarketplacePostService {
                 .stream().map(this::toResponse).toList();
     }
 
+    /** Returns every status, including PENDING_APPROVAL, for the administrator. */
+    public List<MarketplacePostResponse> findAllForAdmin() {
+        return postRepository.findAll(null, null, null, null, null, null, false, null)
+                .stream().map(this::toResponse).toList();
+    }
+
     public List<MarketplacePostResponse> findBySeller(Long sellerId) {
         if (userRepository.findById(sellerId).isEmpty()) {
             throw new MarketplaceReferenceNotFoundException("seller", sellerId);
