@@ -30,6 +30,7 @@ public class FoodRepository {
         jdbc.update(c -> { var ps = c.prepareStatement("INSERT INTO food_vendor (user_id,name,location,description,phone,image_url,active) VALUES (?,?,?,?,?,?,TRUE)", Statement.RETURN_GENERATED_KEYS); ps.setLong(1,value.userId()); ps.setString(2,value.name()); ps.setString(3,value.location()); ps.setString(4,value.description()); ps.setString(5,value.phone()); ps.setString(6,value.imageUrl()); return ps; }, keys);
         return new FoodVendor(keys.getKey().longValue(), value.userId(), value.name(), value.location(), value.description(), value.phone(), value.imageUrl(), true);
     }
+    public boolean updateVendorStoreStatus(Long vendorId, boolean online) { return jdbc.update("UPDATE food_vendor SET active=? WHERE vendor_id=?", online, vendorId) > 0; }
     public List<FoodItem> findAvailableItems(Long vendorId) { return items("SELECT " + ITEM + " FROM food_item WHERE vendor_id = ? AND available = TRUE ORDER BY food_item_id DESC", vendorId); }
     public List<FoodItem> findVendorItems(Long vendorId) { return items("SELECT " + ITEM + " FROM food_item WHERE vendor_id = ? ORDER BY food_item_id DESC", vendorId); }
     private List<FoodItem> items(String sql, Long vendorId) { return jdbc.query(sql, (rs,n) -> item(rs), vendorId); }

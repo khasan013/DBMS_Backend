@@ -9,4 +9,6 @@ import com.campuscrate.security.CurrentUser;
  public NotificationController(NotificationRepository notifications,CurrentUser current){this.notifications=notifications;this.current=current;}
  @GetMapping("/me") public List<NotificationResponse> mine(){return notifications.userList(current.currentUserId());}
  @GetMapping("/admin") public List<NotificationResponse> admin(){current.currentAdminId();return notifications.adminList();}
+ @PutMapping("/me/read-all") public void markMineRead(){notifications.markUserRead(current.currentUserId());}
+ @PutMapping("/admin/read-all") public void markAdminRead(){current.currentAdminId();notifications.markAdminRead();}
 }

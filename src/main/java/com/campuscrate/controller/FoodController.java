@@ -18,6 +18,7 @@ public class FoodController {
     public FoodController(FoodService food, CurrentUser current, @Value("${sslcommerz.frontend-food-url}") String foodUrl){this.food=food;this.current=current;this.foodUrl=foodUrl;}
     @GetMapping("/api/food/vendors") public List<VendorResponse> vendors(){return food.publicVendors();}
     @GetMapping("/api/vendors/me") public VendorResponse mine(){return food.mine(current.currentUserId());}
+    @PutMapping("/api/vendors/me/store-status") public VendorResponse storeStatus(@Valid @RequestBody VendorStoreStatusRequest request){return food.updateStoreStatus(current.currentUserId(),request.online());}
     @GetMapping("/api/vendors/me/orders") public List<VendorOrderResponse> orders(){return food.vendorOrders(current.currentUserId());}
     @PutMapping("/api/vendors/me/orders/{orderId}/status") public ResponseEntity<Void> updateOrderStatus(@PathVariable Long orderId,@Valid @RequestBody FoodOrderStatusRequest request){food.updateOrderStatus(current.currentUserId(),orderId,request.status());return ResponseEntity.noContent().build();}
     @PostMapping("/api/vendors/me/items") public ResponseEntity<FoodItemResponse> createItem(@Valid @RequestBody FoodItemRequest r){return ResponseEntity.status(HttpStatus.CREATED).body(food.createItem(current.currentUserId(),r));}
