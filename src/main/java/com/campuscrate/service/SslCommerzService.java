@@ -20,7 +20,8 @@ public class SslCommerzService {
     private final String storeId, storePassword, callbackBase;
     private final boolean live;
     private final ObjectMapper json;
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    // One shared client reuses TLS connections; HTTP/2 is used whenever the gateway supports it.
+    private final HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).connectTimeout(Duration.ofSeconds(10)).build();
     public SslCommerzService(@Value("${sslcommerz.store-id}") String storeId, @Value("${sslcommerz.store-password}") String storePassword,
             @Value("${sslcommerz.live:false}") boolean live, @Value("${sslcommerz.callback-base-url}") String callbackBase, ObjectMapper json) {
         this.storeId=storeId; this.storePassword=storePassword; this.live=live; this.callbackBase=callbackBase == null ? "" : callbackBase.replaceAll("/$", ""); this.json=json;
