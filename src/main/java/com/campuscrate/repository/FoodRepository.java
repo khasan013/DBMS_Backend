@@ -53,6 +53,6 @@ public class FoodRepository {
     }
     public Optional<Long> findOrderBuyer(Long orderId, Long vendorId) { return jdbc.query("SELECT buyer_id FROM food_order WHERE food_order_id=? AND vendor_id=?", (rs,n) -> rs.getLong(1), orderId, vendorId).stream().findFirst(); }
     public Optional<String> findOrderStatus(Long orderId, Long vendorId) { return jdbc.query("SELECT order_status FROM food_order WHERE food_order_id=? AND vendor_id=?", (rs,n) -> rs.getString(1), orderId, vendorId).stream().findFirst(); }
-    public boolean updateOrderStatus(Long orderId, Long vendorId, String status) { return jdbc.update("UPDATE food_order SET order_status=? WHERE food_order_id=? AND vendor_id=?", status, orderId, vendorId) > 0; }
+    public boolean updateOrderStatus(Long orderId, Long vendorId, String status) { return jdbc.update("UPDATE food_order SET order_status=? WHERE food_order_id=? AND vendor_id=? AND order_status IN ('PLACED','CONFIRMED')", status, orderId, vendorId) > 0; }
     private List<com.campuscrate.dto.VendorOrderItemResponse> findOrderItems(Long orderId) { return jdbc.query("SELECT f.name, oi.quantity, oi.unit_price FROM food_order_item oi JOIN food_item f ON f.food_item_id=oi.food_item_id WHERE oi.food_order_id=?", (rs,n) -> new com.campuscrate.dto.VendorOrderItemResponse(rs.getString("name"),rs.getInt("quantity"),rs.getBigDecimal("unit_price")), orderId); }
 }
