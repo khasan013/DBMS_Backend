@@ -17,7 +17,7 @@ import com.campuscrate.model.MarketplacePost;
 public class MarketplacePostRepository {
 
     private static final String SELECT_COLUMNS = "post_id, seller_id, category_id, location_id, title, description, "
-            + "`condition`, selling_type, fixed_price, starting_price, auction_start, auction_end, status, "
+            + "image_url, `condition`, selling_type, fixed_price, starting_price, auction_start, auction_end, status, "
             + "created_at, updated_at";
 
     private final JdbcTemplate jdbcTemplate;
@@ -29,9 +29,9 @@ public class MarketplacePostRepository {
 
     public MarketplacePost create(MarketplacePost post) {
         String sql = "INSERT INTO `MARKETPLACE_POST` "
-                + "(seller_id, category_id, location_id, title, description, `condition`, selling_type, "
+                + "(seller_id, category_id, location_id, title, description, image_url, `condition`, selling_type, "
                 + "fixed_price, starting_price, auction_start, auction_end, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -40,13 +40,14 @@ public class MarketplacePostRepository {
             statement.setLong(3, post.getLocationId());
             statement.setString(4, post.getTitle());
             statement.setString(5, post.getDescription());
-            statement.setString(6, post.getCondition());
-            statement.setString(7, post.getSellingType());
-            statement.setBigDecimal(8, post.getFixedPrice());
-            statement.setBigDecimal(9, post.getStartingPrice());
-            statement.setObject(10, post.getAuctionStart());
-            statement.setObject(11, post.getAuctionEnd());
-            statement.setString(12, post.getStatus());
+            statement.setString(6, post.getImageUrl());
+            statement.setString(7, post.getCondition());
+            statement.setString(8, post.getSellingType());
+            statement.setBigDecimal(9, post.getFixedPrice());
+            statement.setBigDecimal(10, post.getStartingPrice());
+            statement.setObject(11, post.getAuctionStart());
+            statement.setObject(12, post.getAuctionEnd());
+            statement.setString(13, post.getStatus());
             return statement;
         }, keyHolder);
 

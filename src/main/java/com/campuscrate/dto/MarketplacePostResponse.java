@@ -10,6 +10,7 @@ public record MarketplacePostResponse(
         Long locationId,
         String title,
         String description,
+        String imageUrl,
         String condition,
         String sellingType,
         BigDecimal fixedPrice,

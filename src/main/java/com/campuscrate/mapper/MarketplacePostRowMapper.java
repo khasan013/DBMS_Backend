@@ -19,6 +19,7 @@ public class MarketplacePostRowMapper implements RowMapper<MarketplacePost> {
                 resultSet.getLong("location_id"),
                 resultSet.getString("title"),
                 resultSet.getString("description"),
+                resultSet.getString("image_url"),
                 resultSet.getString("condition"),
                 resultSet.getString("selling_type"),
                 resultSet.getBigDecimal("fixed_price"),

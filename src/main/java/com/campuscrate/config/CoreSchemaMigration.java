@@ -53,6 +53,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "item_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
                 + "title VARCHAR(255) NOT NULL, "
                 + "description TEXT NOT NULL, "
+                + "image_url VARCHAR(500) NULL, "
                 + "item_type VARCHAR(30) NOT NULL, "
                 + "image_url VARCHAR(500) NULL, "
                 + "status VARCHAR(30) NOT NULL, "
@@ -167,13 +168,14 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "quantity INT NOT NULL, unit_price DECIMAL(12,2) NOT NULL, CONSTRAINT fk_food_order_item_order FOREIGN KEY (food_order_id) REFERENCES food_order (food_order_id) ON DELETE CASCADE, "
                 + "CONSTRAINT fk_food_order_item_food FOREIGN KEY (food_item_id) REFERENCES food_item (food_item_id))");
         ensureColumn("food_order", "delivery_location", "VARCHAR(500) NULL");
+        ensureColumn("MARKETPLACE_POST", "image_url", "VARCHAR(500) NULL");
         jdbcTemplate.execute("CREATE OR REPLACE VIEW recent_highlights AS "
                 + "SELECT CONCAT('lost-', i.item_id) AS highlight_id, 'lost' AS module, i.title, i.description, i.status, "
                 + "NULL AS price, i.image_url, i.created_at AS created_at, c.name AS category_or_area "
                 + "FROM `ITEM` i JOIN `CATEGORY` c ON c.category_id = i.category_id WHERE i.status IN ('LOST', 'FOUND') "
                 + "UNION ALL "
                 + "SELECT CONCAT('market-', p.post_id), 'market', p.title, p.description, p.status, COALESCE(p.fixed_price, p.starting_price), "
-                + "NULL, p.created_at, c.name FROM `MARKETPLACE_POST` p JOIN `CATEGORY` c ON c.category_id = p.category_id WHERE p.status = 'ACTIVE' "
+                + "p.image_url, p.created_at, c.name FROM `MARKETPLACE_POST` p JOIN `CATEGORY` c ON c.category_id = p.category_id WHERE p.status = 'ACTIVE' "
                 + "UNION ALL "
                 + "SELECT CONCAT('to-let-', l.listing_id), 'to-let', l.title, l.description, l.status, l.monthly_rent, "
                 + "(SELECT ph.photo_url FROM to_let_listing_photo ph WHERE ph.listing_id = l.listing_id ORDER BY ph.display_order LIMIT 1), "

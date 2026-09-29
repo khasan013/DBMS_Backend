@@ -14,6 +14,7 @@ public record MarketplacePostCreateRequest(
         @NotNull(message = "Location ID is required") Long locationId,
         @NotBlank(message = "Title is required") @Size(max = 255) String title,
         @Size(max = 5000) String description,
+        @NotBlank(message = "A marketplace photo is required") @Size(max = 500) String imageUrl,
         @NotBlank(message = "Condition is required") @Size(max = 50) String condition,
         @NotBlank(message = "Selling type is required") @Size(max = 50) String sellingType,
         @DecimalMin(value = "0.01", message = "Fixed price must be greater than zero") BigDecimal fixedPrice,

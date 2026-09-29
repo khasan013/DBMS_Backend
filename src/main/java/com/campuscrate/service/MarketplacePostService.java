@@ -58,7 +58,7 @@ public class MarketplacePostService {
                 request.auctionStart(), request.auctionEnd());
 
         MarketplacePost post = new MarketplacePost(null, request.sellerId(), request.categoryId(),
-                request.locationId(), request.title(), request.description(), request.condition(),
+                request.locationId(), request.title(), request.description(), request.imageUrl(), request.condition(),
                 request.sellingType(), request.fixedPrice(), request.startingPrice(),
                 request.auctionStart(), request.auctionEnd(), "PENDING_APPROVAL", null, null);
         try {
@@ -157,7 +157,7 @@ public class MarketplacePostService {
                 request.auctionStart(), request.auctionEnd());
 
         MarketplacePost updated = new MarketplacePost(postId, existing.getSellerId(), request.categoryId(),
-                request.locationId(), request.title(), request.description(), request.condition(),
+                request.locationId(), request.title(), request.description(), existing.getImageUrl(), request.condition(),
                 request.sellingType(), request.fixedPrice(), request.startingPrice(),
                 request.auctionStart(), request.auctionEnd(), existing.getStatus(),
                 existing.getCreatedAt(), existing.getUpdatedAt());
@@ -247,7 +247,7 @@ public class MarketplacePostService {
 
     private MarketplacePostResponse toResponse(MarketplacePost post) {
         return new MarketplacePostResponse(post.getPostId(), post.getSellerId(), post.getCategoryId(),
-                post.getLocationId(), post.getTitle(), post.getDescription(), post.getCondition(),
+                post.getLocationId(), post.getTitle(), post.getDescription(), post.getImageUrl(), post.getCondition(),
                 post.getSellingType(), post.getFixedPrice(), post.getStartingPrice(),
                 post.getAuctionStart(), post.getAuctionEnd(), post.getStatus(), post.getCreatedAt(),
                 post.getUpdatedAt());

@@ -11,6 +11,7 @@ public class MarketplacePost {
     private Long locationId;
     private String title;
     private String description;
+    private String imageUrl;
     private String condition;
     private String sellingType;
     private BigDecimal fixedPrice;
@@ -25,7 +26,7 @@ public class MarketplacePost {
     }
 
     public MarketplacePost(Long postId, Long sellerId, Long categoryId, Long locationId,
-            String title, String description, String condition, String sellingType,
+            String title, String description, String imageUrl, String condition, String sellingType,
             BigDecimal fixedPrice, BigDecimal startingPrice, LocalDateTime auctionStart,
             LocalDateTime auctionEnd, String status, LocalDateTime createdAt,
             LocalDateTime updatedAt) {
@@ -35,6 +36,7 @@ public class MarketplacePost {
         this.locationId = locationId;
         this.title = title;
         this.description = description;
+        this.imageUrl = imageUrl;
         this.condition = condition;
         this.sellingType = sellingType;
         this.fixedPrice = fixedPrice;
@@ -58,6 +60,8 @@ public class MarketplacePost {
     public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getCondition() { return condition; }
     public void setCondition(String condition) { this.condition = condition; }
     public String getSellingType() { return sellingType; }
