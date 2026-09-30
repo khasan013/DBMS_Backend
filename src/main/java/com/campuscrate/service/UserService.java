@@ -50,14 +50,12 @@ public class UserService {
                 null,
                 request.studentId(),
                 request.name(),
-                request.email(), false, false,
+                request.email(), true, false,
                 passwordEncoder.encode(request.password()),
                 request.phone(),
                 request.profileImgUrl());
         try {
-            UserResponse response = toResponse(userRepository.create(user));
-            emailVerificationService.sendOtp(request.email());
-            return response;
+            return toResponse(userRepository.create(user));
         } catch (DataIntegrityViolationException exception) {
             throw new DuplicateStudentIdException(request.studentId());
         }
@@ -70,7 +68,6 @@ public class UserService {
             throw new InvalidCredentialsException();
         }
         if (user.isSuspended()) throw new InvalidRequestException("This account has been suspended. Contact an administrator.");
-        if (!user.isEmailVerified()) throw new InvalidRequestException("Verify your email before signing in.");
         return new AuthResponse<>(jwtService.createToken(user.getUserId(), "USER"), "Bearer",
                 jwtService.expirationSeconds(), toResponse(user));
     }

@@ -29,6 +29,7 @@ public class CoreSchemaMigration implements ApplicationRunner {
                 + "profile_img_url VARCHAR(500) NULL, "
                 + "UNIQUE KEY uk_user_student_id (student_id), "
                 + "UNIQUE KEY uk_user_email (email))");
+        jdbcTemplate.execute("UPDATE `USER` SET email_verified = TRUE WHERE email_verified = FALSE");
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS `ADMIN` ("
                 + "admin_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
